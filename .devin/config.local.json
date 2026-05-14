@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Exec(strings)",
+      "Exec(python3)",
+      "Exec(pip install)",
+      "Exec(ls)",
+      "Exec(pip3 install)",
+      "Exec(/tmp/venv/bin/pip install)",
+      "Exec(date)",
+      "Exec(pdftotext)",
+      "Exec(apt-get list)",
+      "Exec(apt-get install)",
+      "Exec(sudo apt-get)",
+      "Exec(head)",
+      "Exec(cat)",
+      "Exec(/tmp/venv/bin/python3)",
+      "Exec(sudo lsof)",
+      "Exec(lsof)",
+      "Exec(docker)",
+      "Exec(mkdir)",
+      "Exec(sudo chown)",
+      "Exec(curl)",
+      "Exec(chmod)",
+      "Exec(true)",
+      "Exec(find)"
+    ]
+  }
+}

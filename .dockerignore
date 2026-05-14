@@ -1,0 +1,5 @@
+.git
+.memory_bank
+vendor/
+storage/cache/*
+storage/counter/*

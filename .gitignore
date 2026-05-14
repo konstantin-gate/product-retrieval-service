@@ -1,0 +1,46 @@
+
+###> symfony/asset-mapper ###
+/public/assets/
+/assets/vendor/
+###< symfony/asset-mapper ###
+
+###> friendsofphp/php-cs-fixer ###
+/.php-cs-fixer.php
+/.php-cs-fixer.cache
+###< friendsofphp/php-cs-fixer ###
+
+###> phpunit/phpunit ###
+/phpunit.xml
+/.phpunit.cache/
+###< phpunit/phpunit ###
+
+###> project-specific ###
+.memory_bank/
+###< project-specific ###
+
+###> symfony/core ###
+/vendor/
+/var/
+.env.local
+.env.test.local
+.env.*.local
+###< symfony/core ###
+
+###> project-storage ###
+/storage/cache/*
+/storage/counter/*
+!/storage/cache/.gitignore
+!/storage/counter/.gitignore
+###< project-storage ###
+
+###> dev-tools ###
+.phpstan-cache/
+.phpunit.result.cache
+###< dev-tools ###
+
+###> os-ide ###
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+###< os-ide ###
