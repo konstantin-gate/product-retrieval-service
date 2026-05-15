@@ -24,4 +24,13 @@ interface ProductSourceInterface
      * @throws \RuntimeException if the product is not found or source is unavailable
      */
     public function findById(ProductId $id): ProductDTO;
+
+    /**
+     * Returns a list of sample product IDs.
+     *
+     * @param int<1, max> $limit
+     *
+     * @return list<string>
+     */
+    public function findSampleIds(int $limit): array;
 }

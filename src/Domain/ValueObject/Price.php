@@ -24,13 +24,13 @@ final readonly class Price
     }
 
     /**
-     * Creates a Price from a decimal string amount.
+     * Creates a Price from a minor unit integer amount (as string).
      *
-     * @param string $amount Decimal amount (e.g. "199.90")
+     * @param string $amount Minor unit amount (e.g. "19990" for 199.90 CZK)
      */
     public static function of(string $amount): self
     {
-        return new self(Money::of($amount, self::DEFAULT_CURRENCY));
+        return new self(Money::ofMinor($amount, self::DEFAULT_CURRENCY));
     }
 
     /**

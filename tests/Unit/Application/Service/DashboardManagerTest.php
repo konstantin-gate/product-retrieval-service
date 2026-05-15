@@ -1,0 +1,105 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\Unit\Application\Service;
+
+use App\Application\Service\DashboardManager;
+use App\Domain\Contract\ConfigInterface;
+use App\Domain\Contract\HealthCheckInterface;
+use App\Domain\Contract\ProductSourceInterface;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
+use Symfony\Component\Filesystem\Filesystem;
+
+/**
+ * Unit tests for DashboardManager.
+ */
+final class DashboardManagerTest extends TestCase
+{
+    private string $projectDir;
+    private Filesystem $filesystem;
+    private ConfigInterface&MockObject $config;
+    private ProductSourceInterface&MockObject $source;
+    private HealthCheckInterface&MockObject $mysqlHealth;
+    private HealthCheckInterface&MockObject $elasticSearchHealth;
+    private HealthCheckInterface&MockObject $redisHealth;
+    private DashboardManager $manager;
+
+    protected function setUp(): void
+    {
+        $this->projectDir = \sys_get_temp_dir().'/logio_test_'.\uniqid();
+        \mkdir($this->projectDir);
+        $this->filesystem = new Filesystem();
+        $this->config = $this->createMock(ConfigInterface::class);
+        $this->source = $this->createMock(ProductSourceInterface::class);
+        $this->mysqlHealth = $this->createMock(HealthCheckInterface::class);
+        $this->elasticSearchHealth = $this->createMock(HealthCheckInterface::class);
+        $this->redisHealth = $this->createMock(HealthCheckInterface::class);
+
+        $this->manager = new DashboardManager(
+            $this->projectDir,
+            $this->filesystem,
+            $this->config,
+            $this->source,
+            $this->mysqlHealth,
+            $this->elasticSearchHealth,
+            $this->redisHealth,
+        );
+    }
+
+    protected function tearDown(): void
+    {
+        $this->filesystem->remove($this->projectDir);
+    }
+
+    public function testSetToggle(): void
+    {
+        $envLocalPath = $this->projectDir.'/.env.local';
+
+        $this->manager->setToggle('TEST_KEY', 'test_value');
+
+        self::assertFileExists($envLocalPath);
+        self::assertStringContainsString('TEST_KEY=test_value', $this->filesystem->readFile($envLocalPath));
+
+        $this->manager->setToggle('TEST_KEY', 'new_value');
+        self::assertStringContainsString('TEST_KEY=new_value', $this->filesystem->readFile($envLocalPath));
+        self::assertStringNotContainsString('TEST_KEY=test_value', $this->filesystem->readFile($envLocalPath));
+    }
+
+    public function testGetCurrentConfig(): void
+    {
+        $this->config->method('getDataSource')->willReturn('mysql');
+        $this->config->method('getCacheDriver')->willReturn('redis');
+        $this->config->method('getCounterMode')->willReturn('async');
+
+        $config = $this->manager->getCurrentConfig();
+
+        self::assertSame([
+            'source' => 'mysql',
+            'cache' => 'redis',
+            'counter' => 'async',
+        ], $config);
+    }
+
+    public function testGetHealthStatus(): void
+    {
+        $this->mysqlHealth->method('isHealthy')->willReturn(true);
+        $this->elasticSearchHealth->method('isHealthy')->willReturn(false);
+        $this->redisHealth->method('isHealthy')->willReturn(true);
+
+        $status = $this->manager->getHealthStatus();
+
+        self::assertTrue($status['mysql']);
+        self::assertFalse($status['elasticsearch']);
+        self::assertTrue($status['redis']);
+    }
+
+    public function testGetSampleProductIds(): void
+    {
+        $ids = ['id1', 'id2'];
+        $this->source->expects($this->once())->method('findSampleIds')->with(5)->willReturn($ids);
+
+        self::assertSame($ids, $this->manager->getSampleProductIds(5));
+    }
+}

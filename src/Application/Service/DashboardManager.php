@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Application\Service;
 
+use App\Domain\Contract\ConfigInterface;
+use App\Domain\Contract\HealthCheckInterface;
+use App\Domain\Contract\ProductSourceInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
@@ -11,9 +14,23 @@ use Symfony\Component\Filesystem\Filesystem;
  */
 final readonly class DashboardManager
 {
+    /**
+     * @param string                 $projectDir          Root directory of the project
+     * @param Filesystem             $filesystem          Symfony Filesystem component
+     * @param ConfigInterface        $config              Application configuration
+     * @param ProductSourceInterface $source              Active product source
+     * @param HealthCheckInterface   $mysqlHealth         MySQL health-check adapter
+     * @param HealthCheckInterface   $elasticSearchHealth ElasticSearch health-check adapter
+     * @param HealthCheckInterface   $redisHealth         Redis health-check adapter
+     */
     public function __construct(
         private string $projectDir,
         private Filesystem $filesystem,
+        private ConfigInterface $config,
+        private ProductSourceInterface $source,
+        private HealthCheckInterface $mysqlHealth,
+        private HealthCheckInterface $elasticSearchHealth,
+        private HealthCheckInterface $redisHealth,
     ) {
     }
 
@@ -58,8 +75,37 @@ final readonly class DashboardManager
         $this->filesystem->dumpFile($envLocalPath, \implode("\n", $filtered)."\n");
     }
 
+    /**
+     * @return array{source: string, cache: string, counter: string}
+     */
+    public function getCurrentConfig(): array
+    {
+        return [
+            'source' => $this->config->getDataSource(),
+            'cache' => $this->config->getCacheDriver(),
+            'counter' => $this->config->getCounterMode(),
+        ];
+    }
+
+    /**
+     * @return array{mysql: bool, elasticsearch: bool, redis: bool}
+     */
     public function getHealthStatus(): array
     {
-        return [];
+        return [
+            'mysql' => $this->mysqlHealth->isHealthy(),
+            'elasticsearch' => $this->elasticSearchHealth->isHealthy(),
+            'redis' => $this->redisHealth->isHealthy(),
+        ];
+    }
+
+    /**
+     * @param int<1, max> $limit
+     *
+     * @return list<string>
+     */
+    public function getSampleProductIds(int $limit): array
+    {
+        return $this->source->findSampleIds($limit);
     }
 }

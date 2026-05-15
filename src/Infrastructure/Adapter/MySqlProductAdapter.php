@@ -29,4 +29,9 @@ final readonly class MySqlProductAdapter implements ProductSourceInterface
 
         return ProductDTO::fromArray($data);
     }
+
+    public function findSampleIds(int $limit): array
+    {
+        return $this->driver->findAllIds($limit);
+    }
 }

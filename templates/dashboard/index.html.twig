@@ -1,0 +1,52 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Product Search Dashboard{% endblock %}
+
+{% block body %}
+<div class="p-8">
+    <h1 class="text-2xl font-bold mb-4">Product Search Dashboard</h1>
+
+    <div class="mt-4">
+        <h2 class="text-lg font-semibold">Health Status</h2>
+        <ul>
+            <li>MySQL: {{ healthStatus.mysql ? 'Online' : 'Offline' }}</li>
+            <li>ElasticSearch: {{ healthStatus.elasticsearch ? 'Online' : 'Offline' }}</li>
+            <li>Redis: {{ healthStatus.redis ? 'Online' : 'Offline' }}</li>
+        </ul>
+    </div>
+
+    <div class="mt-4">
+        <h2 class="text-lg font-semibold">Current Configuration</h2>
+        <ul>
+            <li>Source: {{ currentConfig.source }}</li>
+            <li>Cache: {{ currentConfig.cache }}</li>
+            <li>Counter: {{ currentConfig.counter }}</li>
+        </ul>
+    </div>
+
+    <div class="mt-4">
+        <h2 class="text-lg font-semibold">Sample Product IDs</h2>
+        <ul>
+            {% for id in productIds %}
+                <li>{{ id }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="mt-4">
+        <h2 class="text-lg font-semibold">Toggle Configuration</h2>
+        <form method="post" action="{{ path('dashboard_toggle') }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('toggle') }}">
+            <label>Source:</label>
+            <select name="key">
+                <option value="ACTIVE_PRODUCT_SOURCE">ACTIVE_PRODUCT_SOURCE</option>
+            </select>
+            <select name="value">
+                <option value="elasticsearch">elasticsearch</option>
+                <option value="mysql">mysql</option>
+            </select>
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Toggle</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

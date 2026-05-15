@@ -23,10 +23,32 @@ final readonly class ElasticSearchProductAdapter implements ProductSourceInterfa
     {
     }
 
+    private const INDEX_NAME = 'products';
+
     public function findById(ProductId $id): ProductDTO
     {
         $data = $this->driver->findById($id->value());
 
         return ProductDTO::fromArray($data);
+    }
+
+    public function findSampleIds(int $limit): array
+    {
+        $response = $this->driver->search([
+            'index' => self::INDEX_NAME,
+            'size' => $limit,
+            '_source' => false,
+            'query' => ['match_all' => (object) []],
+        ]);
+
+        $ids = [];
+        /** @var array<string, mixed> $hit */
+        foreach ($response['hits']['hits'] ?? [] as $hit) {
+            if (\array_key_exists('_id', $hit) && null !== $hit['_id']) {
+                $ids[] = (string) $hit['_id'];
+            }
+        }
+
+        return $ids;
     }
 }

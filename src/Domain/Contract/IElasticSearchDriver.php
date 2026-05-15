@@ -21,4 +21,13 @@ interface IElasticSearchDriver
      * @throws \RuntimeException if the product is not found or ES is unavailable
      */
     public function findById(string $id): array;
+
+    /**
+     * Executes a raw search query in ElasticSearch.
+     *
+     * @param array<string, mixed> $params ElasticSearch client params
+     *
+     * @return array<string, mixed> Raw ES response
+     */
+    public function search(array $params): array;
 }

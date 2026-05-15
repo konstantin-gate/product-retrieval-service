@@ -46,4 +46,20 @@ final readonly class SimpleMySqlDriver implements IMysqlDriver
             throw new SourceUnavailableException('Database error: '.$e->getMessage(), 0, $e);
         }
     }
+
+    public function findAllIds(int $limit): array
+    {
+        try {
+            $stmt = $this->pdo->prepare('SELECT id FROM products LIMIT :limit');
+            $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
+            $stmt->execute();
+
+            /** @var list<string> $ids */
+            $ids = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+
+            return $ids;
+        } catch (\PDOException $e) {
+            throw new SourceUnavailableException('Database error: '.$e->getMessage(), 0, $e);
+        }
+    }
 }

@@ -23,7 +23,8 @@
       "Exec(curl)",
       "Exec(chmod)",
       "Exec(true)",
-      "Exec(find)"
+      "Exec(find)",
+      "Exec(git diff)"
     ]
   }
 }

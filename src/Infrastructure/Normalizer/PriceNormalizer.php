@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\Normalizer;
 
 use App\Domain\ValueObject\Price;
+use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 /**
@@ -12,7 +13,7 @@ use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
  *
  * Returns integer amount for JSON format, formatted string otherwise.
  */
-final readonly class PriceNormalizer implements NormalizerInterface
+final readonly class PriceNormalizer implements NormalizerInterface, DenormalizerInterface
 {
     /**
      * Normalizes a Price object.
@@ -50,10 +51,26 @@ final readonly class PriceNormalizer implements NormalizerInterface
         return $data instanceof Price;
     }
 
+    /**
+     * @param array<string, mixed> $context
+     */
+    public function denormalize(mixed $data, string $type, ?string $format = null, array $context = []): mixed
+    {
+        return Price::of((string) $data);
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    public function supportsDenormalization(mixed $data, string $type, ?string $format = null, array $context = []): bool
+    {
+        return Price::class === $type;
+    }
+
     public function getSupportedTypes(?string $format): array
     {
         return [
-            Price::class => false,
+            Price::class => true,
         ];
     }
 }

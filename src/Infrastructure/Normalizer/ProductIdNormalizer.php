@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\Normalizer;
 
 use App\Domain\ValueObject\ProductId;
+use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 /**
@@ -12,7 +13,7 @@ use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
  *
  * Returns the UUID string representation.
  */
-final readonly class ProductIdNormalizer implements NormalizerInterface
+final readonly class ProductIdNormalizer implements NormalizerInterface, DenormalizerInterface
 {
     /**
      * Normalizes a ProductId object.
@@ -46,10 +47,26 @@ final readonly class ProductIdNormalizer implements NormalizerInterface
         return $data instanceof ProductId;
     }
 
+    /**
+     * @param array<string, mixed> $context
+     */
+    public function denormalize(mixed $data, string $type, ?string $format = null, array $context = []): mixed
+    {
+        return ProductId::fromString((string) $data);
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    public function supportsDenormalization(mixed $data, string $type, ?string $format = null, array $context = []): bool
+    {
+        return ProductId::class === $type;
+    }
+
     public function getSupportedTypes(?string $format): array
     {
         return [
-            ProductId::class => false,
+            ProductId::class => true,
         ];
     }
 }

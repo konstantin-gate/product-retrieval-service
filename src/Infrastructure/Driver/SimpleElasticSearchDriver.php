@@ -58,4 +58,16 @@ final readonly class SimpleElasticSearchDriver implements IElasticSearchDriver
 
         return $source;
     }
+
+    public function search(array $params): array
+    {
+        try {
+            /** @var array<string, mixed> $response */
+            $response = $this->client->search($params)->asArray();
+
+            return $response;
+        } catch (\Exception $e) {
+            throw new SourceUnavailableException('ElasticSearch error: '.$e->getMessage(), 0, $e);
+        }
+    }
 }

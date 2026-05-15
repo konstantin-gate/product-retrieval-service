@@ -21,4 +21,13 @@ interface IMysqlDriver
      * @throws \RuntimeException if the product is not found or database is unavailable
      */
     public function findProduct(string $id): array;
+
+    /**
+     * Returns a list of all product IDs in MySQL up to the limit.
+     *
+     * @param int<1, max> $limit
+     *
+     * @return list<string>
+     */
+    public function findAllIds(int $limit): array;
 }

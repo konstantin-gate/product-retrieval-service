@@ -7,8 +7,10 @@
         "php": ">=8.2",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "ext-pdo": "*",
+        "ext-redis": "*",
         "brick/money": "^0.13.0",
-        "elasticsearch/elasticsearch": "^9.4",
+        "elasticsearch/elasticsearch": "^8.17",
         "symfony/asset-mapper": "7.4.*",
         "symfony/console": "7.4.*",
         "symfony/dotenv": "7.4.*",
@@ -16,8 +18,11 @@
         "symfony/framework-bundle": "7.4.*",
         "symfony/http-client": "7.4.*",
         "symfony/messenger": "7.4.*",
+        "symfony/property-access": "7.4.*",
+        "symfony/property-info": "7.4.*",
         "symfony/redis-messenger": "7.4.*",
         "symfony/runtime": "7.4.*",
+        "symfony/security-csrf": "7.4.*",
         "symfony/serializer": "7.4.*",
         "symfony/twig-bundle": "7.4.*",
         "symfony/uid": "7.4.*",
@@ -78,10 +83,13 @@
         }
     },
     "require-dev": {
+        "fakerphp/faker": "^1.24",
         "friendsofphp/php-cs-fixer": "^3.95",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5",
+        "symfony/browser-kit": "7.4.*",
+        "symfony/css-selector": "7.4.*",
         "symfony/maker-bundle": "^1.67"
     }
 }

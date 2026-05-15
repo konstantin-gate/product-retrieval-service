@@ -33,12 +33,10 @@ services:
 
     PDO:
         class: PDO
+        factory: ['App\Infrastructure\Factory\PdoConnectionFactory', 'create']
         arguments:
-            $dsn: '%env(resolve:DATABASE_URL)%'
-            $username: '%env(resolve:DATABASE_USER)%'
-            $password: '%env(resolve:DATABASE_PASSWORD)%'
-        calls:
-            - [setAttribute, [!php/const PDO::ATTR_ERRMODE, !php/const PDO::ERRMODE_EXCEPTION]]
+            $databaseUrl: '%env(resolve:DATABASE_URL)%'
+        lazy: true
 
     Elastic\Elasticsearch\Client:
         factory: ['Elastic\Elasticsearch\ClientBuilder', 'fromConfig']
@@ -50,6 +48,37 @@ services:
         factory: ['App\Infrastructure\Factory\RedisConnectionFactory', 'create']
         arguments:
             $dsn: '%env(resolve:REDIS_URL)%'
+
+    # --- Health Check Adapters ---
+
+    app.health.mysql:
+        class: App\Infrastructure\Health\MySqlHealthAdapter
+        arguments:
+            $pdo: '@PDO'
+
+    app.health.elasticsearch:
+        class: App\Infrastructure\Health\ElasticSearchHealthAdapter
+        arguments:
+            $client: '@Elastic\Elasticsearch\Client'
+
+    app.health.redis:
+        class: App\Infrastructure\Health\RedisHealthAdapter
+        arguments:
+            $redis: '@Redis'
+
+    # --- Application ---
+
+    App\Application\Service\DashboardManager:
+        arguments:
+            $mysqlHealth: '@app.health.mysql'
+            $elasticSearchHealth: '@app.health.elasticsearch'
+            $redisHealth: '@app.health.redis'
+
+    # --- Commands ---
+
+    App\Infrastructure\Command\SeedCommand:
+        arguments:
+            $defaultSeedCount: '%env(int:SEED_COUNT)%'
 
     # --- Domain Ports (Adapters) ---
 
@@ -65,19 +94,19 @@ services:
         class: App\Infrastructure\Driver\SimpleMySqlDriver
 
     App\Domain\Contract\ProductSourceInterface:
-        factory: ['App\Infrastructure\Factory\ProductSourceFactory', 'create']
+        factory: ['@App\Infrastructure\Factory\ProductSourceFactory', 'create']
 
     App\Domain\Contract\CacheInterface:
-        factory: ['App\Infrastructure\Factory\CacheAdapterFactory', 'create']
+        factory: ['@App\Infrastructure\Factory\CacheAdapterFactory', 'create']
         arguments:
             $type: '%app.active_cache_driver%'
 
     App\Domain\Contract\CounterInterface:
-        factory: ['App\Infrastructure\Factory\CounterAdapterFactory', 'create']
+        factory: ['@App\Infrastructure\Factory\CounterAdapterFactory', 'create']
         arguments:
             $mode: '%app.active_counter_mode%'
 
     App\Domain\Contract\SyncCounterInterface:
-        factory: ['App\Infrastructure\Factory\CounterAdapterFactory', 'createSync']
+        factory: ['@App\Infrastructure\Factory\CounterAdapterFactory', 'createSync']
         arguments:
             $mode: '%app.active_counter_mode%'

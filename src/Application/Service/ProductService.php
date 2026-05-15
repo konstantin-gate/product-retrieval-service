@@ -56,4 +56,28 @@ final readonly class ProductService
 
         return $product;
     }
+
+    /**
+     * Retrieves the current view count for a product.
+     *
+     * @param ProductId $id Product identifier
+     *
+     * @return int Total view count
+     */
+    public function getCount(ProductId $id): int
+    {
+        return $this->counter->getCount($id);
+    }
+
+    /**
+     * Returns a list of sample product IDs from the source.
+     *
+     * @param int<1, max> $limit
+     *
+     * @return list<string>
+     */
+    public function getSampleProductIds(int $limit): array
+    {
+        return $this->source->findSampleIds($limit);
+    }
 }
