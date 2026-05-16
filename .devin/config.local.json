@@ -24,7 +24,12 @@
       "Exec(chmod)",
       "Exec(true)",
       "Exec(find)",
-      "Exec(git diff)"
+      "Exec(git diff)",
+      "Exec(grep)",
+      "Exec(sed)",
+      "Exec(tail)",
+      "Exec(stat)",
+      "Exec(sleep)"
     ]
   }
 }

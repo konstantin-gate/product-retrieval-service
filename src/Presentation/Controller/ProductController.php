@@ -8,6 +8,7 @@ use App\Application\Service\ProductService;
 use App\Domain\ValueObject\ProductId;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -21,11 +22,23 @@ final class ProductController extends AbstractController
     }
 
     #[Route('/product/{id}', name: 'product_detail', methods: ['GET'])]
-    public function detail(string $id): Response
+    public function detail(string $id, Request $request): Response
     {
         $productId = ProductId::fromString($id);
-        $product = $this->productService->getProduct($productId);
-        $json = $this->serializer->serialize($product, 'json');
+        $startTime = microtime(true);
+
+        $result = $this->productService->getProductWithTrace($productId);
+        $ttfbMs = round((microtime(true) - $startTime) * 1000, 2);
+
+        if ($request->headers->has('Turbo-Frame')) {
+            return $this->render('product/_frame.html.twig', [
+                'product' => $result->product,
+                'trace' => $result,
+                'ttfbMs' => $ttfbMs,
+            ]);
+        }
+
+        $json = $this->serializer->serialize($result->product, 'json');
 
         return JsonResponse::fromJsonString($json);
     }

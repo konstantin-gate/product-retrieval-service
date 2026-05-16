@@ -8,6 +8,7 @@ use App\Application\Service\DashboardManager;
 use App\Domain\Contract\ConfigInterface;
 use App\Domain\Contract\HealthCheckInterface;
 use App\Domain\Contract\ProductSourceInterface;
+use App\Domain\Contract\SeederInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Filesystem\Filesystem;
@@ -24,6 +25,7 @@ final class DashboardManagerTest extends TestCase
     private HealthCheckInterface&MockObject $mysqlHealth;
     private HealthCheckInterface&MockObject $elasticSearchHealth;
     private HealthCheckInterface&MockObject $redisHealth;
+    private SeederInterface&MockObject $seeder;
     private DashboardManager $manager;
 
     protected function setUp(): void
@@ -36,6 +38,7 @@ final class DashboardManagerTest extends TestCase
         $this->mysqlHealth = $this->createMock(HealthCheckInterface::class);
         $this->elasticSearchHealth = $this->createMock(HealthCheckInterface::class);
         $this->redisHealth = $this->createMock(HealthCheckInterface::class);
+        $this->seeder = $this->createMock(SeederInterface::class);
 
         $this->manager = new DashboardManager(
             $this->projectDir,
@@ -45,6 +48,7 @@ final class DashboardManagerTest extends TestCase
             $this->mysqlHealth,
             $this->elasticSearchHealth,
             $this->redisHealth,
+            $this->seeder,
         );
     }
 

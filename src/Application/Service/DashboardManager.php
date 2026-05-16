@@ -7,6 +7,7 @@ namespace App\Application\Service;
 use App\Domain\Contract\ConfigInterface;
 use App\Domain\Contract\HealthCheckInterface;
 use App\Domain\Contract\ProductSourceInterface;
+use App\Domain\Contract\SeederInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
@@ -22,6 +23,7 @@ final readonly class DashboardManager
      * @param HealthCheckInterface   $mysqlHealth         MySQL health-check adapter
      * @param HealthCheckInterface   $elasticSearchHealth ElasticSearch health-check adapter
      * @param HealthCheckInterface   $redisHealth         Redis health-check adapter
+     * @param SeederInterface        $seeder              Product seeder
      */
     public function __construct(
         private string $projectDir,
@@ -31,6 +33,7 @@ final readonly class DashboardManager
         private HealthCheckInterface $mysqlHealth,
         private HealthCheckInterface $elasticSearchHealth,
         private HealthCheckInterface $redisHealth,
+        private SeederInterface $seeder,
     ) {
     }
 
@@ -107,5 +110,15 @@ final readonly class DashboardManager
     public function getSampleProductIds(int $limit): array
     {
         return $this->source->findSampleIds($limit);
+    }
+
+    /**
+     * Seeds product data into storage backends.
+     *
+     * @param int<1, max> $count Number of products to generate
+     */
+    public function seed(int $count): void
+    {
+        $this->seeder->seed($count);
     }
 }

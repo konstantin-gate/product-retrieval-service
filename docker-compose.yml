@@ -20,6 +20,7 @@ services:
     build:
       context: ./docker/php
       dockerfile: Dockerfile
+    user: "1000:1000"
     volumes:
       - ./:/var/www
     depends_on:
@@ -42,6 +43,7 @@ services:
     build:
       context: ./docker/php
       dockerfile: Dockerfile
+    user: "1000:1000"
     volumes:
       - ./:/var/www
     depends_on:

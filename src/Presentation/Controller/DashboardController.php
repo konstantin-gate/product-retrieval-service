@@ -19,6 +19,10 @@ final class DashboardController extends AbstractController
         'ACTIVE_COUNTER_MODE' => ['async', 'filesystem', 'redis', 'null'],
     ];
 
+    private const SEED_MIN_COUNT = 1;
+    private const SEED_MAX_COUNT = 1000;
+    private const SEED_DEFAULT_COUNT = 1000;
+
     public function __construct(
         private DashboardManager $manager,
     ) {
@@ -55,11 +59,38 @@ final class DashboardController extends AbstractController
 
         $this->manager->setToggle($key, $value);
 
-        return new JsonResponse([
-            'status' => 'ok',
-            'key' => $key,
-            'value' => $value,
-            'notice' => 'Run cache:clear and restart worker to apply changes.',
-        ]);
+        if ($request->isXmlHttpRequest()) {
+            return new JsonResponse([
+                'status' => 'ok',
+                'key' => $key,
+                'value' => $value,
+                'notice' => 'Run cache:clear and restart worker to apply changes.',
+            ]);
+        }
+
+        return $this->redirectToRoute('dashboard');
+    }
+
+    #[Route('/seed', name: 'dashboard_seed', methods: ['POST'])]
+    public function seed(Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('seed', (string) $request->request->get('_token'))) {
+            $this->addFlash('error', 'Invalid CSRF token.');
+
+            return $this->redirectToRoute('dashboard');
+        }
+
+        $count = (int) $request->request->get('count', (string) self::SEED_DEFAULT_COUNT);
+
+        if ($count < self::SEED_MIN_COUNT || $count > self::SEED_MAX_COUNT) {
+            $this->addFlash('error', 'Count must be between 1 and 1000.');
+
+            return $this->redirectToRoute('dashboard');
+        }
+
+        $this->manager->seed($count);
+        $this->addFlash('success', "Successfully generated {$count} products.");
+
+        return $this->redirectToRoute('dashboard');
     }
 }

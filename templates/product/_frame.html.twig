@@ -1,0 +1,38 @@
+<turbo-frame id="search-result">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+        {# Left: Product Card #}
+        <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">{{ product.name }}</h2>
+            <div class="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-lg font-semibold mb-4">
+                {{ product.price.formatted }}
+            </div>
+            <p class="text-sm text-gray-500 font-mono mb-4">{{ product.id.value }}</p>
+            <p class="text-gray-600 leading-relaxed">{{ product.description }}</p>
+            <div class="mt-4 flex items-center gap-2 text-gray-500 text-sm"
+                 x-data="{ count: null }"
+                 x-init="fetch('/product/{{ product.id.value }}/counter').then(r => r.json()).then(d => { count = d.count }).catch(() => { count = 0 })">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                </svg>
+                <span x-show="count === null">Loading views...</span>
+                <span x-show="count !== null" x-text="count + ' views'">0 views</span>
+            </div>
+        </div>
+
+        {# Right: Trace View (Terminal style) #}
+        <div class="bg-gray-900 rounded-xl shadow-lg p-6 font-mono text-sm overflow-x-auto">
+            <div class="text-green-400 mb-1">// Execution Trace</div>
+            <div class="text-yellow-400 mb-3">> TTFB: {{ ttfbMs }} ms</div>
+            <div class="mb-2 {{ trace.cacheHit ? 'text-green-400' : 'text-yellow-400' }}">
+                > [{{ trace.cacheHit ? 'CACHE HIT' : 'CACHE MISS' }}]
+            </div>
+            <div class="text-cyan-400 mb-3">> Source: {{ trace.source }}</div>
+            <div class="text-gray-300 space-y-1">
+                {% for line in trace.executionLog %}
+                    <div>> {{ line }}</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</turbo-frame>

@@ -6,6 +6,7 @@ namespace App\Tests\Unit\Application\Service;
 
 use App\Application\Service\ProductService;
 use App\Domain\Contract\CacheInterface;
+use App\Domain\Contract\ConfigInterface;
 use App\Domain\Contract\CounterInterface;
 use App\Domain\Contract\ProductSourceInterface;
 use App\Domain\DTO\ProductDTO;
@@ -19,6 +20,7 @@ final class ProductServiceTest extends TestCase
     private ProductSourceInterface&MockObject $source;
     private CacheInterface&MockObject $cache;
     private CounterInterface&MockObject $counter;
+    private ConfigInterface&MockObject $config;
     private ProductService $service;
 
     protected function setUp(): void
@@ -26,7 +28,8 @@ final class ProductServiceTest extends TestCase
         $this->source = $this->createMock(ProductSourceInterface::class);
         $this->cache = $this->createMock(CacheInterface::class);
         $this->counter = $this->createMock(CounterInterface::class);
-        $this->service = new ProductService($this->source, $this->cache, $this->counter);
+        $this->config = $this->createMock(ConfigInterface::class);
+        $this->service = new ProductService($this->source, $this->cache, $this->counter, $this->config);
     }
 
     public function testGetProductCacheHit(): void

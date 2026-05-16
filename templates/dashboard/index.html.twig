@@ -3,50 +3,136 @@
 {% block title %}Product Search Dashboard{% endblock %}
 
 {% block body %}
-<div class="p-8">
-    <h1 class="text-2xl font-bold mb-4">Product Search Dashboard</h1>
+<div x-data="{ searchId: '', dropdownOpen: false }" data-turbo-permanent class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-    <div class="mt-4">
-        <h2 class="text-lg font-semibold">Health Status</h2>
-        <ul>
-            <li>MySQL: {{ healthStatus.mysql ? 'Online' : 'Offline' }}</li>
-            <li>ElasticSearch: {{ healthStatus.elasticsearch ? 'Online' : 'Offline' }}</li>
-            <li>Redis: {{ healthStatus.redis ? 'Online' : 'Offline' }}</li>
-        </ul>
-    </div>
+    {# Flash messages #}
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="mb-4 p-3 rounded-md text-sm {{ label == 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200' }}" role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endfor %}
 
-    <div class="mt-4">
-        <h2 class="text-lg font-semibold">Current Configuration</h2>
-        <ul>
-            <li>Source: {{ currentConfig.source }}</li>
-            <li>Cache: {{ currentConfig.cache }}</li>
-            <li>Counter: {{ currentConfig.counter }}</li>
-        </ul>
-    </div>
+    <h1 class="text-3xl font-bold text-gray-900 mb-8">Product Search Dashboard</h1>
 
-    <div class="mt-4">
-        <h2 class="text-lg font-semibold">Sample Product IDs</h2>
-        <ul>
-            {% for id in productIds %}
-                <li>{{ id }}</li>
-            {% endfor %}
-        </ul>
-    </div>
+    {# ===== БЛОК 1: Control Panel ===== #}
+    <section class="bg-white rounded-lg shadow p-6 mb-8" aria-label="Control Panel">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Control Panel</h2>
 
-    <div class="mt-4">
-        <h2 class="text-lg font-semibold">Toggle Configuration</h2>
-        <form method="post" action="{{ path('dashboard_toggle') }}">
-            <input type="hidden" name="_token" value="{{ csrf_token('toggle') }}">
-            <label>Source:</label>
-            <select name="key">
-                <option value="ACTIVE_PRODUCT_SOURCE">ACTIVE_PRODUCT_SOURCE</option>
-            </select>
-            <select name="value">
-                <option value="elasticsearch">elasticsearch</option>
-                <option value="mysql">mysql</option>
-            </select>
-            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Toggle</button>
-        </form>
-    </div>
+        {# Health Status #}
+        <div class="mb-6">
+            <h3 class="text-sm font-medium text-gray-600 mb-2">System Health</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {% for service, healthy in healthStatus %}
+                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <span class="w-3 h-3 rounded-full {{ healthy ? 'bg-green-500' : 'bg-red-500' }}" aria-hidden="true"></span>
+                    <div>
+                        <span class="text-sm font-medium text-gray-900">{{ service|capitalize }}</span>
+                        <span class="text-xs {{ healthy ? 'text-green-600' : 'text-red-600' }}">
+                            {{ healthy ? 'Connected' : 'Disconnected' }}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# Generate Data #}
+        <div class="mb-6">
+            <h3 class="text-sm font-medium text-gray-600 mb-2">Data Generation</h3>
+            <form method="post" action="{{ path('dashboard_seed') }}"
+                  x-data="{ seeding: false }"
+                  @submit="seeding = true">
+                <input type="hidden" name="_token" value="{{ csrf_token('seed') }}">
+                <input type="hidden" name="count" value="1000">
+                <button type="submit"
+                        :disabled="seeding"
+                        class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm">
+                    <span x-show="!seeding">Generate Data</span>
+                    <span x-show="seeding" class="flex items-center gap-2">
+                        <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Seeding...
+                    </span>
+                </button>
+            </form>
+        </div>
+
+        {# Configuration Toggles #}
+        <div>
+            <h3 class="text-sm font-medium text-gray-600 mb-2">Configuration</h3>
+            <div class="space-y-3">
+                {% for key, options in allowedToggles %}
+                    {% set configKey = key == 'ACTIVE_PRODUCT_SOURCE' ? 'source' : (key == 'ACTIVE_CACHE_DRIVER' ? 'cache' : 'counter') %}
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm font-mono text-gray-500 w-52">{{ key }}</span>
+                        <div class="flex gap-1" role="group" aria-label="{{ key }} toggle">
+                            {% for option in options %}
+                                <form method="post" action="{{ path('dashboard_toggle') }}" class="inline">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('toggle') }}">
+                                    <input type="hidden" name="key" value="{{ key }}">
+                                    <input type="hidden" name="value" value="{{ option }}">
+                                    <button type="submit"
+                                        class="px-3 py-1 rounded-full text-xs font-medium transition-colors
+                                               {{ currentConfig[configKey] == option ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
+                                        {{ option }}
+                                    </button>
+                                </form>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    {# ===== БЛОК 2: Search Area ===== #}
+    <section class="bg-white rounded-lg shadow p-6 mb-8" aria-label="Search">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Search</h2>
+
+        <div class="flex gap-3 items-end">
+            {# UUID input + dropdown #}
+            <div class="relative flex-1">
+                <label for="search-input" class="sr-only">Product UUID</label>
+                <input type="text" id="search-input"
+                       x-model="searchId"
+                       @focus="dropdownOpen = true"
+                       @click.away="dropdownOpen = false"
+                       placeholder="Enter product UUID..."
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm">
+                <ul x-show="dropdownOpen" x-transition
+                    class="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                    {% for id in productIds %}
+                    <li @click="searchId = '{{ id }}'; dropdownOpen = false"
+                        class="px-4 py-2 cursor-pointer hover:bg-gray-100 text-xs font-mono truncate">
+                        {{ id }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            {# Search button — sets turbo-frame src via Alpine #}
+            <button @click="document.getElementById('search-result').src = '/product/' + searchId"
+                    :disabled="!searchId"
+                    class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm">
+                Search
+            </button>
+        </div>
+    </section>
+
+    {# ===== БЛОК 3: Split View ===== #}
+    <section aria-label="Search Result">
+        <turbo-frame id="search-result" class="mt-8">
+            <div class="text-center text-gray-500 py-12">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <p class="mt-2 text-sm">Search for a product to see results here.</p>
+            </div>
+        </turbo-frame>
+    </section>
 </div>
 {% endblock %}

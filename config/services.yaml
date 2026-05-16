@@ -73,6 +73,7 @@ services:
             $mysqlHealth: '@app.health.mysql'
             $elasticSearchHealth: '@app.health.elasticsearch'
             $redisHealth: '@app.health.redis'
+            $seeder: '@App\Domain\Contract\SeederInterface'
 
     # --- Commands ---
 
@@ -110,3 +111,6 @@ services:
         factory: ['@App\Infrastructure\Factory\CounterAdapterFactory', 'createSync']
         arguments:
             $mode: '%app.active_counter_mode%'
+
+    App\Domain\Contract\SeederInterface:
+        class: App\Infrastructure\Seeder\SeederAdapter

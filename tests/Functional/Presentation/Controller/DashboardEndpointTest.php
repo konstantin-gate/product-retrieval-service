@@ -22,10 +22,12 @@ final class DashboardEndpointTest extends WebTestCase
         $client = static::createClient();
         $crawler = $client->request('GET', '/');
 
-        $form = $crawler->selectButton('Toggle')->form();
+        $form = $crawler->filter('form[action="/toggle"]')->first()->form();
         $client->submit($form, [
             'key' => 'ACTIVE_PRODUCT_SOURCE',
             'value' => 'mysql',
+        ], [
+            'HTTP_X-Requested-With' => 'XMLHttpRequest',
         ]);
 
         self::assertResponseIsSuccessful();
@@ -33,6 +35,20 @@ final class DashboardEndpointTest extends WebTestCase
         self::assertSame('ok', $data['status']);
         self::assertSame('ACTIVE_PRODUCT_SOURCE', $data['key']);
         self::assertSame('mysql', $data['value']);
+    }
+
+    public function testToggleHtmlFormRedirect(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/');
+
+        $form = $crawler->filter('form[action="/toggle"]')->first()->form();
+        $client->submit($form, [
+            'key' => 'ACTIVE_PRODUCT_SOURCE',
+            'value' => 'elasticsearch',
+        ]);
+
+        self::assertResponseStatusCodeSame(302);
     }
 
     public function testToggleNoCsrf(): void
@@ -51,13 +67,14 @@ final class DashboardEndpointTest extends WebTestCase
         $client = static::createClient();
         $crawler = $client->request('GET', '/');
 
-        // Extract CSRF token
-        $token = $crawler->filter('input[name="_token"]')->attr('value');
+        $token = $crawler->filter('form[action="/toggle"] input[name="_token"]')->first()->attr('value');
 
         $client->request('POST', '/toggle', [
             'key' => 'INVALID_KEY',
             'value' => 'mysql',
             '_token' => $token,
+        ], [], [
+            'HTTP_X-Requested-With' => 'XMLHttpRequest',
         ]);
 
         self::assertResponseStatusCodeSame(400);
@@ -68,12 +85,14 @@ final class DashboardEndpointTest extends WebTestCase
         $client = static::createClient();
         $crawler = $client->request('GET', '/');
 
-        $token = $crawler->filter('input[name="_token"]')->attr('value');
+        $token = $crawler->filter('form[action="/toggle"] input[name="_token"]')->first()->attr('value');
 
         $client->request('POST', '/toggle', [
             'key' => 'ACTIVE_PRODUCT_SOURCE',
             'value' => 'invalid_value',
             '_token' => $token,
+        ], [], [
+            'HTTP_X-Requested-With' => 'XMLHttpRequest',
         ]);
 
         self::assertResponseStatusCodeSame(400);
