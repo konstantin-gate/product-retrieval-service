@@ -4,30 +4,31 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Infrastructure\Driver;
 
+use App\Domain\Contract\ConfigInterface;
 use App\Domain\Exception\ProductNotFoundException;
 use App\Infrastructure\Driver\SimpleElasticSearchDriver;
-use Elastic\Elasticsearch\ClientBuilder;
-use PHPUnit\Framework\TestCase;
+use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
  * Integration tests for SimpleElasticSearchDriver against real ES (Docker).
  */
-final class SimpleElasticSearchDriverTest extends TestCase
+final class SimpleElasticSearchDriverTest extends KernelTestCase
 {
     private \Elastic\Elasticsearch\Client $esClient;
     private SimpleElasticSearchDriver $driver;
+    private string $esIndexName;
 
-    private const INDEX_NAME = 'products';
     private const TEST_ID = '550e8400-e29b-41d4-a716-446655440110';
 
     protected function setUp(): void
     {
-        $this->esClient = ClientBuilder::create()
-            ->setHosts(['http://elasticsearch:9200'])
-            ->build();
+        $container = static::getContainer();
+
+        $this->esClient = $container->get(\Elastic\Elasticsearch\Client::class);
+        $this->esIndexName = $container->get(ConfigInterface::class)->getEsIndexName();
 
         $this->esClient->index([
-            'index' => self::INDEX_NAME,
+            'index' => $this->esIndexName,
             'id' => self::TEST_ID,
             'body' => [
                 'id' => self::TEST_ID,
@@ -38,14 +39,14 @@ final class SimpleElasticSearchDriverTest extends TestCase
             'refresh' => 'true',
         ]);
 
-        $this->driver = new SimpleElasticSearchDriver($this->esClient);
+        $this->driver = new SimpleElasticSearchDriver($this->esClient, $this->esIndexName);
     }
 
     protected function tearDown(): void
     {
         try {
             $this->esClient->delete([
-                'index' => self::INDEX_NAME,
+                'index' => $this->esIndexName,
                 'id' => self::TEST_ID,
             ]);
         } catch (\Elastic\Elasticsearch\Exception\ClientResponseException) {
@@ -71,7 +72,7 @@ final class SimpleElasticSearchDriverTest extends TestCase
     public function testSearchByName(): void
     {
         $result = $this->driver->search([
-            'index' => self::INDEX_NAME,
+            'index' => $this->esIndexName,
             'body' => [
                 'query' => [
                     'match' => [
@@ -88,7 +89,7 @@ final class SimpleElasticSearchDriverTest extends TestCase
     public function testFindAllIds(): void
     {
         $result = $this->driver->search([
-            'index' => self::INDEX_NAME,
+            'index' => $this->esIndexName,
             'body' => [
                 'query' => ['match_all' => new \stdClass()],
                 '_source' => false,

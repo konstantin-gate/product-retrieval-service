@@ -15,10 +15,9 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[AsCommand(name: 'app:es:init', description: 'Initialize ElasticSearch products index')]
 final class ElasticSearchInitCommand extends Command
 {
-    private const INDEX_NAME = 'products';
-
     public function __construct(
         private Client $client,
+        private string $esIndexName,
         private ?TranslatorInterface $translator = null,
     ) {
         parent::__construct();
@@ -45,7 +44,7 @@ final class ElasticSearchInitCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         try {
-            $exists = 200 === $this->client->indices()->exists(['index' => self::INDEX_NAME])->getStatusCode();
+            $exists = 200 === $this->client->indices()->exists(['index' => $this->esIndexName])->getStatusCode();
 
             if ($exists) {
                 if (!(bool) $input->getOption('force')) {
@@ -53,12 +52,12 @@ final class ElasticSearchInitCommand extends Command
 
                     return Command::SUCCESS;
                 }
-                $this->client->indices()->delete(['index' => self::INDEX_NAME]);
+                $this->client->indices()->delete(['index' => $this->esIndexName]);
                 $output->writeln($this->trans('cli.es_init.deleted'));
             }
 
             $this->client->indices()->create([
-                'index' => self::INDEX_NAME,
+                'index' => $this->esIndexName,
                 'body' => [
                     'mappings' => [
                         'properties' => [
@@ -71,7 +70,7 @@ final class ElasticSearchInitCommand extends Command
                 ],
             ]);
 
-            $output->writeln($this->trans('cli.es_init.success', ['name' => self::INDEX_NAME]));
+            $output->writeln($this->trans('cli.es_init.success', ['name' => $this->esIndexName]));
 
             return Command::SUCCESS;
         } catch (\Exception $e) {

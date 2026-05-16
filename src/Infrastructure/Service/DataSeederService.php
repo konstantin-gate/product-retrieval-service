@@ -13,13 +13,13 @@ use Elastic\Elasticsearch\Client;
  */
 final readonly class DataSeederService
 {
-    private const INDEX_NAME = 'products';
     private const ES_BULK_BATCH_SIZE = 200;
     private const MYSQL_BATCH_SIZE = 100;
 
     public function __construct(
         private \PDO $pdo,
         private Client $client,
+        private string $esIndexName,
     ) {
     }
 
@@ -94,7 +94,7 @@ final readonly class DataSeederService
         foreach ($chunks as $chunk) {
             $bulkBody = [];
             foreach ($chunk as $product) {
-                $bulkBody[] = ['index' => ['_index' => self::INDEX_NAME, '_id' => $product->id->value()]];
+                $bulkBody[] = ['index' => ['_index' => $this->esIndexName, '_id' => $product->id->value()]];
                 $bulkBody[] = [
                     'id' => $product->id->value(),
                     'name' => $product->name,

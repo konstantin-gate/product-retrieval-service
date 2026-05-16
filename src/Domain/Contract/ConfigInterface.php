@@ -40,4 +40,9 @@ interface ConfigInterface
      * Returns the active counter mode name (e.g. "filesystem", "redis", "async", "null").
      */
     public function getCounterMode(): string;
+
+    /**
+     * Returns the ElasticSearch index name for product data.
+     */
+    public function getEsIndexName(): string;
 }

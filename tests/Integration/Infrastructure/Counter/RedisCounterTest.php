@@ -6,12 +6,12 @@ namespace App\Tests\Integration\Infrastructure\Counter;
 
 use App\Domain\ValueObject\ProductId;
 use App\Infrastructure\Counter\RedisCounter;
-use PHPUnit\Framework\TestCase;
+use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
  * Integration tests for RedisCounter with real Redis (Docker).
  */
-final class RedisCounterTest extends TestCase
+final class RedisCounterTest extends KernelTestCase
 {
     private \Redis $redis;
     private RedisCounter $counter;
@@ -21,8 +21,7 @@ final class RedisCounterTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->redis = new \Redis();
-        $this->redis->connect('redis', 6379);
+        $this->redis = static::getContainer()->get(\Redis::class);
         $this->counter = new RedisCounter($this->redis);
 
         // Clean up test keys

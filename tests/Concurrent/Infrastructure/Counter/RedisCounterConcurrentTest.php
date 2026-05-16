@@ -6,12 +6,12 @@ namespace App\Tests\Concurrent\Infrastructure\Counter;
 
 use App\Domain\ValueObject\ProductId;
 use App\Infrastructure\Counter\RedisCounter;
-use PHPUnit\Framework\TestCase;
+use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
  * Concurrent tests verifying atomicity of RedisCounter under parallel increments.
  */
-final class RedisCounterConcurrentTest extends TestCase
+final class RedisCounterConcurrentTest extends KernelTestCase
 {
     private const TEST_UUID = '550e8400-e29b-41d4-a716-446655440051';
     private const TEST_KEY = 'counter:550e8400-e29b-41d4-a716-446655440051';
@@ -24,8 +24,7 @@ final class RedisCounterConcurrentTest extends TestCase
             self::markTestSkipped('pcntl extension not available');
         }
 
-        $this->redis = new \Redis();
-        $this->redis->connect('redis', 6379);
+        $this->redis = static::getContainer()->get(\Redis::class);
         $this->redis->del(self::TEST_KEY);
     }
 
@@ -49,8 +48,16 @@ final class RedisCounterConcurrentTest extends TestCase
                 self::fail('Could not fork');
             }
             if (0 === $pid) {
+                // Child process: cannot use parent's DI container, create new connection from env
                 $redis = new \Redis();
-                $redis->connect('redis', 6379);
+                $envDsn = getenv('REDIS_URL');
+                $dsn = false !== $envDsn ? $envDsn : 'redis://redis:6379/1';
+                $parsed = parse_url($dsn);
+                $redis->connect($parsed['host'] ?? 'redis', $parsed['port'] ?? 6379);
+                $db = isset($parsed['path']) ? (int) ltrim($parsed['path'], '/') : 0;
+                if ($db > 0) {
+                    $redis->select($db);
+                }
                 $counter = new RedisCounter($redis);
                 for ($j = 0; $j < $incrementsPerProcess; ++$j) {
                     $counter->increment($id);

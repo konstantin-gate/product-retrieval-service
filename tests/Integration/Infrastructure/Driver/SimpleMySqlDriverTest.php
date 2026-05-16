@@ -6,12 +6,12 @@ namespace App\Tests\Integration\Infrastructure\Driver;
 
 use App\Domain\Exception\ProductNotFoundException;
 use App\Infrastructure\Driver\SimpleMySqlDriver;
-use PHPUnit\Framework\TestCase;
+use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
  * Integration tests for SimpleMySqlDriver against real MySQL (Docker).
  */
-final class SimpleMySqlDriverTest extends TestCase
+final class SimpleMySqlDriverTest extends KernelTestCase
 {
     private \PDO $pdo;
     private SimpleMySqlDriver $driver;
@@ -20,12 +20,7 @@ final class SimpleMySqlDriverTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->pdo = new \PDO(
-            'mysql:host=mysql;port=3306;dbname=products;charset=utf8mb4',
-            'root',
-            'secret',
-            [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION],
-        );
+        $this->pdo = static::getContainer()->get(\PDO::class);
 
         $stmt = $this->pdo->prepare(
             'REPLACE INTO products (id, name, price, description) VALUES (:id, :name, :price, :description)',

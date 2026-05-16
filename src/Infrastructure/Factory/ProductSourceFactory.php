@@ -31,7 +31,7 @@ final readonly class ProductSourceFactory
     public function create(): ProductSourceInterface
     {
         return match ($this->config->getDataSource()) {
-            self::SOURCE_ELASTICSEARCH => new ElasticSearchProductAdapter($this->esDriver),
+            self::SOURCE_ELASTICSEARCH => new ElasticSearchProductAdapter($this->esDriver, $this->config->getEsIndexName()),
             self::SOURCE_MYSQL => new MySqlProductAdapter($this->mysqlDriver),
             default => throw new \RuntimeException('Unknown product source: '.$this->config->getDataSource()),
         };

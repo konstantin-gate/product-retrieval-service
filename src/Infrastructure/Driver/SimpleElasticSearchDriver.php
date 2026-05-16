@@ -15,13 +15,14 @@ use Elastic\Elasticsearch\Exception\ClientResponseException;
  */
 final readonly class SimpleElasticSearchDriver implements IElasticSearchDriver
 {
-    private const PRODUCTS_INDEX_NAME = 'products';
-
     /**
-     * @param Client $client Pre-configured ElasticSearch client
+     * @param Client $client      Pre-configured ElasticSearch client
+     * @param string $esIndexName ElasticSearch index name for product data
      */
-    public function __construct(private Client $client)
-    {
+    public function __construct(
+        private Client $client,
+        private string $esIndexName,
+    ) {
     }
 
     /**
@@ -38,7 +39,7 @@ final readonly class SimpleElasticSearchDriver implements IElasticSearchDriver
     {
         try {
             $response = $this->client->get([
-                'index' => self::PRODUCTS_INDEX_NAME,
+                'index' => $this->esIndexName,
                 'id' => $id,
             ]);
         } catch (ClientResponseException $e) {

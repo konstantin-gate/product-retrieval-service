@@ -8,6 +8,7 @@ parameters:
     app.active_cache_driver: '%env(ACTIVE_CACHE_DRIVER)%'
     app.active_counter_mode: '%env(ACTIVE_COUNTER_MODE)%'
     app.counter_base_mode: '%env(resolve:COUNTER_BASE_MODE)%'
+    app.es_index_name: '%env(ES_INDEX_NAME)%'
 
 services:
     # default configuration for services in *this* file
@@ -97,6 +98,14 @@ services:
         arguments:
             $defaultSeedCount: '%env(int:SEED_COUNT)%'
 
+    App\Infrastructure\Command\ElasticSearchInitCommand:
+        arguments:
+            $esIndexName: '%app.es_index_name%'
+
+    App\Infrastructure\Service\DataSeederService:
+        arguments:
+            $esIndexName: '%app.es_index_name%'
+
     # --- Domain Ports (Adapters) ---
 
     App\Domain\Contract\ConfigInterface:
@@ -106,6 +115,7 @@ services:
         class: App\Infrastructure\Driver\SimpleElasticSearchDriver
         arguments:
             $client: '@Elastic\Elasticsearch\Client'
+            $esIndexName: '%app.es_index_name%'
 
     App\Domain\Contract\IMysqlDriver:
         class: App\Infrastructure\Driver\SimpleMySqlDriver

@@ -47,4 +47,9 @@ final readonly class EnvConfig implements ConfigInterface
     {
         return $this->getString('app.active_counter_mode');
     }
+
+    public function getEsIndexName(): string
+    {
+        return $this->getString('app.es_index_name');
+    }
 }

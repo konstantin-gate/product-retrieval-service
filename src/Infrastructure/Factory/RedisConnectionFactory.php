@@ -25,6 +25,11 @@ final readonly class RedisConnectionFactory
         $redis = new \Redis();
         $redis->connect($host, $port);
 
+        $db = isset($parsed['path']) ? (int) ltrim($parsed['path'], '/') : 0;
+        if ($db > 0) {
+            $redis->select($db);
+        }
+
         return $redis;
     }
 }

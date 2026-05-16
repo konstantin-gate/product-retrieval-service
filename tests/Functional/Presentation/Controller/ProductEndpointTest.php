@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional\Presentation\Controller;
 
+use App\Domain\Contract\ConfigInterface;
 use App\Domain\Contract\SyncCounterInterface;
 use App\Domain\ValueObject\ProductId;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
@@ -16,8 +17,9 @@ final class ProductEndpointTest extends WebTestCase
     public function testGetProductExistingReturns200(): void
     {
         $client = static::createClient();
-
         $container = static::getContainer();
+        $esIndexName = $container->get(ConfigInterface::class)->getEsIndexName();
+
         $pdo = $container->get(\PDO::class);
         $esClient = $container->get(\Elastic\Elasticsearch\Client::class);
 
@@ -31,7 +33,7 @@ final class ProductEndpointTest extends WebTestCase
         ]);
 
         $esClient->index([
-            'index' => 'products',
+            'index' => $esIndexName,
             'id' => $id,
             'body' => [
                 'id' => $id,
@@ -77,8 +79,9 @@ final class ProductEndpointTest extends WebTestCase
     public function testCounterIncrementsOnRepeatedRequests(): void
     {
         $client = static::createClient();
-
         $container = static::getContainer();
+        $esIndexName = $container->get(ConfigInterface::class)->getEsIndexName();
+
         $pdo = $container->get(\PDO::class);
         $esClient = $container->get(\Elastic\Elasticsearch\Client::class);
 
@@ -96,7 +99,7 @@ final class ProductEndpointTest extends WebTestCase
         ]);
 
         $esClient->index([
-            'index' => 'products',
+            'index' => $esIndexName,
             'id' => $id,
             'body' => [
                 'id' => $id,
@@ -121,7 +124,7 @@ final class ProductEndpointTest extends WebTestCase
         self::assertResponseIsSuccessful();
 
         // Consume async messages to increment counter
-        $kernel = static::getContainer()->get('kernel');
+        $kernel = $container->get('kernel');
         $application = new Application($kernel);
         $application->setAutoExit(false);
 
@@ -135,7 +138,7 @@ final class ProductEndpointTest extends WebTestCase
         $application->run($input, $output);
 
         // Check sync counter directly (async counter delegates to sync counter)
-        $syncCounter = static::getContainer()->get(SyncCounterInterface::class);
+        $syncCounter = $container->get(SyncCounterInterface::class);
         $syncCount = $syncCounter->getCount(ProductId::fromString($id));
         self::assertGreaterThanOrEqual(2, $syncCount);
 
@@ -149,8 +152,9 @@ final class ProductEndpointTest extends WebTestCase
     public function testSerializationStructure(): void
     {
         $client = static::createClient();
-
         $container = static::getContainer();
+        $esIndexName = $container->get(ConfigInterface::class)->getEsIndexName();
+
         $pdo = $container->get(\PDO::class);
         $esClient = $container->get(\Elastic\Elasticsearch\Client::class);
 
@@ -164,7 +168,7 @@ final class ProductEndpointTest extends WebTestCase
         ]);
 
         $esClient->index([
-            'index' => 'products',
+            'index' => $esIndexName,
             'id' => $id,
             'body' => [
                 'id' => $id,

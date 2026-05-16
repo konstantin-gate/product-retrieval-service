@@ -18,13 +18,14 @@ use App\Infrastructure\Factory\ProductDTOFactory;
 final readonly class ElasticSearchProductAdapter implements ProductSourceInterface
 {
     /**
-     * @param IElasticSearchDriver $driver ElasticSearch driver implementation
+     * @param IElasticSearchDriver $driver      ElasticSearch driver implementation
+     * @param string               $esIndexName ElasticSearch index name for product data
      */
-    public function __construct(private IElasticSearchDriver $driver)
-    {
+    public function __construct(
+        private IElasticSearchDriver $driver,
+        private string $esIndexName,
+    ) {
     }
-
-    private const INDEX_NAME = 'products';
 
     public function findById(ProductId $id): ProductDTO
     {
@@ -36,7 +37,7 @@ final readonly class ElasticSearchProductAdapter implements ProductSourceInterfa
     public function findSampleIds(int $limit): array
     {
         $response = $this->driver->search([
-            'index' => self::INDEX_NAME,
+            'index' => $this->esIndexName,
             'size' => $limit,
             '_source' => false,
             'query' => ['match_all' => (object) []],

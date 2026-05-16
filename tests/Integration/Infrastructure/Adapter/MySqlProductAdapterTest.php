@@ -7,13 +7,12 @@ namespace App\Tests\Integration\Infrastructure\Adapter;
 use App\Domain\Exception\ProductNotFoundException;
 use App\Domain\ValueObject\ProductId;
 use App\Infrastructure\Adapter\MySqlProductAdapter;
-use App\Infrastructure\Driver\SimpleMySqlDriver;
-use PHPUnit\Framework\TestCase;
+use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
  * Integration tests for MySqlProductAdapter against real MySQL (Docker).
  */
-final class MySqlProductAdapterTest extends TestCase
+final class MySqlProductAdapterTest extends KernelTestCase
 {
     private \PDO $pdo;
     private MySqlProductAdapter $adapter;
@@ -25,12 +24,11 @@ final class MySqlProductAdapterTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->pdo = new \PDO(
-            'mysql:host=mysql;port=3306;dbname=products;charset=utf8mb4',
-            'root',
-            'secret',
-            [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION],
-        );
+        $container = static::getContainer();
+
+        $this->pdo = $container->get(\PDO::class);
+        $driver = $container->get(\App\Domain\Contract\IMysqlDriver::class);
+        $this->adapter = new MySqlProductAdapter($driver);
 
         // Clean up any previous test data
         $placeholders = \implode(', ', \array_fill(0, \count(self::TEST_IDS), '?'));
@@ -44,9 +42,6 @@ final class MySqlProductAdapterTest extends TestCase
         $stmt->execute([':id' => self::TEST_ID_1, ':name' => 'Test Product', ':price' => 1999, ':description' => 'Test Description']);
         $stmt->execute([':id' => self::TEST_ID_2, ':name' => 'Second Product', ':price' => 2500, ':description' => 'Second Description']);
         $stmt->execute([':id' => self::TEST_ID_3, ':name' => 'Third Product', ':price' => 3000, ':description' => 'Third Description']);
-
-        $driver = new SimpleMySqlDriver($this->pdo);
-        $this->adapter = new MySqlProductAdapter($driver);
     }
 
     protected function tearDown(): void
