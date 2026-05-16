@@ -1,5 +1,7 @@
 # Technická dokumentace: Product Search
 
+![Dashboard Screenshot](assets/images/dashboard-screenshot.jpg)
+
 ## 1. Obecný popis projektu
 
 Product Search je webová aplikace pro vyhledávání a zobrazování produktů, postavená na principech **Domain-Driven Design (DDD)** s **Hexagonal Architecture (Ports & Adapters)**. Kódová báze je striktně rozdělena do čtyř izolovaných vrstev: `Domain`, `Application`, `Infrastructure`, `Presentation`. Křížové závislosti mezi vrstvami jsou zakázány – jediný směr závislostí: `Presentation → Application → Domain`, zatímco `Infrastructure` implementuje porty (rozhraní) z `Domain`.
