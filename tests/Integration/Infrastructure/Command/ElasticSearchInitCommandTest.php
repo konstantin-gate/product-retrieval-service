@@ -27,8 +27,21 @@ final class ElasticSearchInitCommandTest extends TestCase
             $this->client->indices()->delete(['index' => 'products']);
         }
 
+        $translator = $this->createMock(\Symfony\Contracts\Translation\TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(function (string $id, array $parameters = []): string {
+            return match ($id) {
+                'cli.es_init.exists' => 'Index already exists. Use --force to recreate.',
+                'cli.es_init.deleted' => 'Existing index deleted.',
+                'cli.es_init.success' => 'Index "'.($parameters['name'] ?? 'products').'" created successfully.',
+                'cli.es_init.error' => 'ES init failed: '.($parameters['message'] ?? ''),
+                'cli.es_init.description' => 'Initialize ElasticSearch products index',
+                'cli.es_init.option_force' => 'Recreate index if it exists',
+                default => $id,
+            };
+        });
+
         $application = new Application();
-        $application->addCommand(new ElasticSearchInitCommand($this->client));
+        $application->addCommand(new ElasticSearchInitCommand($this->client, $translator));
 
         $command = $application->find('app:es:init');
         $this->commandTester = new CommandTester($command);

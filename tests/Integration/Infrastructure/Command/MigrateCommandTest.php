@@ -20,8 +20,18 @@ final class MigrateCommandTest extends TestCase
         $this->pdo = new \PDO($dsn, 'root', 'secret');
         $this->pdo->exec('DROP TABLE IF EXISTS products');
 
+        $translator = $this->createMock(\Symfony\Contracts\Translation\TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(function (string $id, array $parameters = []): string {
+            return match ($id) {
+                'cli.migrate.success' => 'Table "products" ensured.',
+                'cli.migrate.error' => 'Migration failed: '.($parameters['message'] ?? ''),
+                'cli.migrate.description' => 'Create MySQL products table',
+                default => $id,
+            };
+        });
+
         $application = new Application();
-        $application->addCommand(new MigrateCommand($this->pdo));
+        $application->addCommand(new MigrateCommand($this->pdo, $translator));
 
         $command = $application->find('app:migrate');
         $this->commandTester = new CommandTester($command);

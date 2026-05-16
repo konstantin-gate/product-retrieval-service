@@ -1,0 +1,82 @@
+app:
+    title: 'Product Search'
+
+dashboard:
+    title: 'Product Search Dashboard'
+    control_panel: 'Control Panel'
+    system_health: 'System Health'
+    data_generation: 'Data Generation'
+    generate_data: 'Generate Data'
+    seeding: 'Seeding...'
+    configuration: 'Configuration'
+    search: 'Search'
+    search_button: 'Search'
+    product_uuid: 'Product UUID'
+    search_placeholder: 'Enter product UUID...'
+    search_result: 'Search Result'
+    empty_state: 'Search for a product to see results here.'
+
+health:
+    status:
+        connected: 'Connected'
+        disconnected: 'Disconnected'
+    service:
+        mysql: 'MySQL'
+        redis: 'Redis'
+        elasticsearch: 'ElasticSearch'
+
+toggle:
+    label:
+        active_product_source: 'Product Source'
+        active_cache_driver: 'Cache Driver'
+        active_counter_mode: 'Counter Mode'
+    value:
+        elasticsearch: 'ElasticSearch'
+        mysql: 'MySQL'
+        file: 'File'
+        redis: 'Redis'
+        'null': 'Disabled'
+        async: 'Async'
+        filesystem: 'Filesystem'
+
+product:
+    views: 'views'
+    loading_views: 'Loading views...'
+    execution_trace: '// Execution Trace'
+    ttfb: '> TTFB: {ms} ms'
+    cache_hit: 'CACHE HIT'
+    cache_miss: 'CACHE MISS'
+    source_label: '> Source:'
+
+locale:
+    switcher:
+        cs: 'Čeština'
+        en: 'English'
+
+flash:
+    invalid_csrf: 'Invalid CSRF token.'
+    count_range_error: 'Count must be between 1 and 1000.'
+    seed_success: 'Successfully generated {count, plural, one {# product} other {# products}}.'
+    toggle_notice: 'Run cache:clear and restart worker to apply changes.'
+
+error:
+    invalid_csrf: 'Invalid CSRF token'
+    unknown_toggle_key: 'Unknown toggle key'
+    invalid_toggle_value: 'Invalid toggle value'
+
+cli:
+    seed:
+        description: 'Generate fake product data'
+        option_count: 'Number of products'
+        success: 'Successfully seeded {count, plural, one {# product} other {# products}}.'
+    migrate:
+        description: 'Create MySQL products table'
+        success: 'Table "products" ensured.'
+        error: 'Migration failed: {message}'
+    es_init:
+        description: 'Initialize ElasticSearch products index'
+        option_force: 'Recreate index if it exists'
+        exists: 'Index already exists. Use --force to recreate.'
+        deleted: 'Existing index deleted.'
+        success: 'Index "{name}" created successfully.'
+        error: 'ES init failed: {message}'

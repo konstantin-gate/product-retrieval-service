@@ -14,7 +14,7 @@ final class DashboardEndpointTest extends WebTestCase
         $client->request('GET', '/');
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('h1', 'Product Search Dashboard');
+        self::assertSelectorTextContains('h1', 'Dashboard vyhledávání produktů');
     }
 
     public function testToggleWithValidCsrfReturns200(): void

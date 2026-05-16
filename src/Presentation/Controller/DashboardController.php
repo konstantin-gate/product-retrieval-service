@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class DashboardController extends AbstractController
 {
@@ -25,6 +26,7 @@ final class DashboardController extends AbstractController
 
     public function __construct(
         private DashboardManager $manager,
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -75,7 +77,7 @@ final class DashboardController extends AbstractController
     public function seed(Request $request): Response
     {
         if (!$this->isCsrfTokenValid('seed', (string) $request->request->get('_token'))) {
-            $this->addFlash('error', 'Invalid CSRF token.');
+            $this->addFlash('error', $this->translator->trans('flash.invalid_csrf'));
 
             return $this->redirectToRoute('dashboard');
         }
@@ -83,13 +85,13 @@ final class DashboardController extends AbstractController
         $count = (int) $request->request->get('count', (string) self::SEED_DEFAULT_COUNT);
 
         if ($count < self::SEED_MIN_COUNT || $count > self::SEED_MAX_COUNT) {
-            $this->addFlash('error', 'Count must be between 1 and 1000.');
+            $this->addFlash('error', $this->translator->trans('flash.count_range_error'));
 
             return $this->redirectToRoute('dashboard');
         }
 
         $this->manager->seed($count);
-        $this->addFlash('success', "Successfully generated {$count} products.");
+        $this->addFlash('success', $this->translator->trans('flash.seed_success', ['count' => $count]));
 
         return $this->redirectToRoute('dashboard');
     }

@@ -14,9 +14,9 @@
                 <stop offset="100%" stop-color="{{ colorEdge }}"/>
             </radialGradient>
         </defs>
-        <!-- Основной шар с тенью по краям -->
+        <!-- Main sphere with edge shadow -->
         <circle cx="12" cy="12" r="10" fill="url(#led-shadow-{{ state }})" />
-        <!-- Блик стекла поверх -->
+        <!-- Glass highlight overlay -->
         <circle cx="12" cy="12" r="10" fill="url(#led-glare-{{ state }})" />
     </svg>
 {% endmacro %}

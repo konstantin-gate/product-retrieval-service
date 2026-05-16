@@ -54,8 +54,18 @@ final class SeedCommandTest extends TestCase
         $seeder = new ProductSeeder();
         $dataSeeder = new DataSeederService($this->pdo, $this->client);
 
+        $translator = $this->createMock(\Symfony\Contracts\Translation\TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(function (string $id, array $parameters = []): string {
+            return str_replace(['{count}'], (string) ($parameters['count'] ?? '?'), match ($id) {
+                'cli.seed.success' => 'Successfully seeded {count} products.',
+                'cli.seed.option_count' => 'Number of products',
+                'cli.seed.description' => 'Generate fake product data',
+                default => $id,
+            });
+        });
+
         $application = new Application();
-        $application->addCommand(new SeedCommand($seeder, $dataSeeder, 10));
+        $application->addCommand(new SeedCommand($seeder, $dataSeeder, 10, $translator));
 
         $command = $application->find('app:seed');
         $this->commandTester = new CommandTester($command);
