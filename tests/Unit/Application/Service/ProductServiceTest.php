@@ -10,6 +10,7 @@ use App\Domain\Contract\ConfigInterface;
 use App\Domain\Contract\CounterInterface;
 use App\Domain\Contract\ProductSourceInterface;
 use App\Domain\DTO\ProductDTO;
+use App\Domain\Exception\SourceUnavailableException;
 use App\Domain\ValueObject\Price;
 use App\Domain\ValueObject\ProductId;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -59,6 +60,52 @@ final class ProductServiceTest extends TestCase
         $result = $this->service->getProduct($id);
 
         self::assertSame($product, $result);
+    }
+
+    public function testCounterIncrementedBeforeCacheCheck(): void
+    {
+        $id = ProductId::fromString('550e8400-e29b-41d4-a716-446655440000');
+        $product = new ProductDTO($id, 'Test', Price::of('1000'), 'Desc');
+
+        $callOrder = [];
+
+        $this->counter->expects($this->once())->method('increment')->with($id)->willReturnCallback(function () use (&$callOrder): void {
+            $callOrder[] = 'counter';
+        });
+        $this->cache->expects($this->once())->method('get')->willReturnCallback(function () use (&$callOrder, $product) {
+            $callOrder[] = 'cache';
+
+            return $product;
+        });
+        $this->source->expects($this->never())->method('findById');
+
+        $this->service->getProduct($id);
+
+        self::assertSame(['counter', 'cache'], $callOrder);
+    }
+
+    public function testGetProductSourceUnavailable(): void
+    {
+        $id = ProductId::fromString('550e8400-e29b-41d4-a716-446655440000');
+
+        $this->counter->expects($this->once())->method('increment')->with($id);
+        $this->cache->expects($this->once())->method('get')->willReturn(null);
+        $this->source->expects($this->once())->method('findById')->willThrowException(new SourceUnavailableException('DB down'));
+        $this->cache->expects($this->never())->method('set');
+
+        $this->expectException(SourceUnavailableException::class);
+        $this->service->getProduct($id);
+    }
+
+    public function testCounterFailureNotSwallowed(): void
+    {
+        $id = ProductId::fromString('550e8400-e29b-41d4-a716-446655440000');
+
+        $this->counter->expects($this->once())->method('increment')->willThrowException(new \RuntimeException('Counter failed'));
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Counter failed');
+        $this->service->getProduct($id);
     }
 
     public function testGetCount(): void

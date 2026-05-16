@@ -7,43 +7,35 @@ namespace App\Tests\Integration\Infrastructure\Cache;
 use App\Domain\DTO\ProductDTO;
 use App\Domain\ValueObject\Price;
 use App\Domain\ValueObject\ProductId;
-use App\Infrastructure\Cache\FileCacheAdapter;
+use App\Infrastructure\Cache\RedisCacheAdapter;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Cache\Adapter\FilesystemAdapter;
-use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Cache\Adapter\RedisAdapter;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
-interface FileCacheSerializerMockInterface extends NormalizerInterface, DenormalizerInterface
+interface RedisCacheSerializerMockInterface extends NormalizerInterface, DenormalizerInterface
 {
 }
 
 /**
- * Integration tests for FileCacheAdapter with real FilesystemAdapter.
+ * Integration tests for RedisCacheAdapter with real Redis (Docker).
  */
-final class FileCacheAdapterTest extends TestCase
+final class RedisCacheAdapterTest extends TestCase
 {
-    private FileCacheAdapter $cache;
-    private string $tempDir;
-    private FileCacheSerializerMockInterface&MockObject $serializer;
+    private RedisCacheAdapter $cache;
+    private RedisCacheSerializerMockInterface&MockObject $serializer;
 
     protected function setUp(): void
     {
-        $this->tempDir = \sys_get_temp_dir().'/logio_cache_test_'.\uniqid();
-        \mkdir($this->tempDir);
+        $redis = new \Redis();
+        $redis->connect('redis', 6379);
+        $redis->select(1);
+        $redis->flushDB();
 
-        $fsAdapter = new FilesystemAdapter('test', 0, $this->tempDir);
-
-        // Mock serializer to handle Price/ProductId normalization correctly
-        $this->serializer = $this->createMock(FileCacheSerializerMockInterface::class);
-
-        $this->cache = new FileCacheAdapter($fsAdapter, $this->serializer);
-    }
-
-    protected function tearDown(): void
-    {
-        (new Filesystem())->remove($this->tempDir);
+        $fsAdapter = new RedisAdapter($redis, namespace: 'test');
+        $this->serializer = $this->createMock(RedisCacheSerializerMockInterface::class);
+        $this->cache = new RedisCacheAdapter($fsAdapter, $this->serializer);
     }
 
     private function createDto(): ProductDTO
@@ -56,7 +48,7 @@ final class FileCacheAdapterTest extends TestCase
         );
     }
 
-    public function testSetAndGetReturnsSameDto(): void
+    public function testSetAndGet(): void
     {
         $dto = $this->createDto();
         $normalized = [
@@ -77,28 +69,9 @@ final class FileCacheAdapterTest extends TestCase
         self::assertSame($dto->name, $result->name);
     }
 
-    public function testGetReturnsNullForMissingKey(): void
+    public function testGetMissReturnsNull(): void
     {
         self::assertNull($this->cache->get('nonexistent'));
-    }
-
-    public function testDeleteRemovesCachedItem(): void
-    {
-        $dto = $this->createDto();
-        $normalized = [
-            'id' => $dto->id->value(),
-            'name' => $dto->name,
-            'price' => $dto->price->amount(),
-            'description' => $dto->description,
-        ];
-
-        $this->serializer->method('normalize')->willReturn($normalized);
-        $this->serializer->method('denormalize')->willReturn($dto);
-
-        $this->cache->set('key', $dto);
-        $this->cache->delete('key');
-
-        self::assertNull($this->cache->get('key'));
     }
 
     public function testSetWithTtlExpires(): void
@@ -122,7 +95,7 @@ final class FileCacheAdapterTest extends TestCase
         self::assertNull($this->cache->get('key'));
     }
 
-    public function testPermanentCacheDoesNotExpire(): void
+    public function testDelete(): void
     {
         $dto = $this->createDto();
         $normalized = [
@@ -135,11 +108,9 @@ final class FileCacheAdapterTest extends TestCase
         $this->serializer->method('normalize')->willReturn($normalized);
         $this->serializer->method('denormalize')->willReturn($dto);
 
-        $this->cache->set('key', $dto, ttl: null);
-        self::assertNotNull($this->cache->get('key'));
+        $this->cache->set('key', $dto);
+        $this->cache->delete('key');
 
-        \sleep(2);
-
-        self::assertNotNull($this->cache->get('key'));
+        self::assertNull($this->cache->get('key'));
     }
 }

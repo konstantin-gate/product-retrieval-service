@@ -58,24 +58,45 @@ final class EnvConfigTest extends TestCase
         self::assertFalse($this->config->has('key'));
     }
 
-    public function testGetDataSourceDelegatesToGetString(): void
+    public function testGetDataSourceReturnsMysql(): void
     {
         $this->parameterBag->method('get')->with('app.active_product_source')->willReturn('mysql');
 
         self::assertSame('mysql', $this->config->getDataSource());
     }
 
-    public function testGetCacheDriverDelegatesToGetString(): void
+    public function testGetDataSourceReturnsElasticsearch(): void
     {
-        $this->parameterBag->method('get')->with('app.active_cache_driver')->willReturn('redis');
+        $this->parameterBag->method('get')->with('app.active_product_source')->willReturn('elasticsearch');
 
-        self::assertSame('redis', $this->config->getCacheDriver());
+        self::assertSame('elasticsearch', $this->config->getDataSource());
     }
 
-    public function testGetCounterModeDelegatesToGetString(): void
+    public function testGetCacheDriverReturnsFile(): void
+    {
+        $this->parameterBag->method('get')->with('app.active_cache_driver')->willReturn('file');
+
+        self::assertSame('file', $this->config->getCacheDriver());
+    }
+
+    public function testGetCounterModeReturnsAsync(): void
     {
         $this->parameterBag->method('get')->with('app.active_counter_mode')->willReturn('async');
 
         self::assertSame('async', $this->config->getCounterMode());
+    }
+
+    public function testGetBoolReturnsTrue(): void
+    {
+        $this->parameterBag->method('get')->with('SOME_BOOL')->willReturn('1');
+
+        self::assertTrue($this->config->getBool('SOME_BOOL'));
+    }
+
+    public function testGetIntReturnsInt(): void
+    {
+        $this->parameterBag->method('get')->with('CACHE_TTL')->willReturn('3600');
+
+        self::assertSame(3600, $this->config->getInt('CACHE_TTL'));
     }
 }

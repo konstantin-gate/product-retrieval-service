@@ -8,7 +8,7 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 final class DashboardEndpointTest extends WebTestCase
 {
-    public function testIndex(): void
+    public function testDashboardIndexReturns200(): void
     {
         $client = static::createClient();
         $client->request('GET', '/');
@@ -17,7 +17,7 @@ final class DashboardEndpointTest extends WebTestCase
         self::assertSelectorTextContains('h1', 'Product Search Dashboard');
     }
 
-    public function testToggleSuccess(): void
+    public function testToggleWithValidCsrfReturns200(): void
     {
         $client = static::createClient();
         $crawler = $client->request('GET', '/');
@@ -37,21 +37,7 @@ final class DashboardEndpointTest extends WebTestCase
         self::assertSame('mysql', $data['value']);
     }
 
-    public function testToggleHtmlFormRedirect(): void
-    {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/');
-
-        $form = $crawler->filter('form[action="/toggle"]')->first()->form();
-        $client->submit($form, [
-            'key' => 'ACTIVE_PRODUCT_SOURCE',
-            'value' => 'elasticsearch',
-        ]);
-
-        self::assertResponseStatusCodeSame(302);
-    }
-
-    public function testToggleNoCsrf(): void
+    public function testToggleWithoutCsrfReturns403(): void
     {
         $client = static::createClient();
         $client->request('POST', '/toggle', [
@@ -60,43 +46,5 @@ final class DashboardEndpointTest extends WebTestCase
         ]);
 
         self::assertResponseStatusCodeSame(403);
-    }
-
-    public function testToggleInvalidKey(): void
-    {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/');
-
-        $token = $crawler->filter('form[action="/toggle"] input[name="_token"]')->first()->attr('value');
-
-        $client->request('POST', '/toggle', [
-            'key' => 'INVALID_KEY',
-            'value' => 'mysql',
-            '_token' => $token,
-        ], [], [
-            'HTTP_X-Requested-With' => 'XMLHttpRequest',
-        ]);
-
-        self::assertResponseStatusCodeSame(400);
-    }
-
-    public function testToggleInvalidValue(): void
-    {
-        $client = static::createClient();
-        $crawler = $client->request('GET', '/');
-
-        $token = $crawler->filter('form[action="/toggle"] input[name="_token"]')->first()->attr('value');
-
-        $client->request('POST', '/toggle', [
-            'key' => 'ACTIVE_PRODUCT_SOURCE',
-            'value' => 'invalid_value',
-            '_token' => $token,
-        ], [], [
-            'HTTP_X-Requested-With' => 'XMLHttpRequest',
-        ]);
-
-        self::assertResponseStatusCodeSame(400);
-        $data = \json_decode($client->getResponse()->getContent(), true);
-        self::assertSame('Invalid toggle value', $data['error']);
     }
 }

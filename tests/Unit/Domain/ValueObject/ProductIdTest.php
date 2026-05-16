@@ -30,4 +30,24 @@ final class ProductIdTest extends TestCase
         $productId = ProductId::fromString('550e8400-e29b-41d4-a716-446655440000');
         self::assertSame('550e8400-e29b-41d4-a716-446655440000', (string) $productId);
     }
+
+    public function testEmptyStringThrowsException(): void
+    {
+        $this->expectException(InvalidProductIdException::class);
+        ProductId::fromString('');
+    }
+
+    public function testWhitespaceStringThrowsException(): void
+    {
+        $this->expectException(InvalidProductIdException::class);
+        ProductId::fromString('   ');
+    }
+
+    public function testEqualityByValue(): void
+    {
+        $a = ProductId::fromString('550e8400-e29b-41d4-a716-446655440000');
+        $b = ProductId::fromString('550e8400-e29b-41d4-a716-446655440000');
+
+        self::assertSame($a->value(), $b->value());
+    }
 }

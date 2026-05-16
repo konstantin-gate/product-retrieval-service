@@ -57,7 +57,7 @@ final class DashboardManagerTest extends TestCase
         $this->filesystem->remove($this->projectDir);
     }
 
-    public function testSetToggle(): void
+    public function testSetToggleCreatesNewFile(): void
     {
         $envLocalPath = $this->projectDir.'/.env.local';
 
@@ -65,10 +65,31 @@ final class DashboardManagerTest extends TestCase
 
         self::assertFileExists($envLocalPath);
         self::assertStringContainsString('TEST_KEY=test_value', $this->filesystem->readFile($envLocalPath));
+    }
+
+    public function testSetToggleUpdatesExistingKey(): void
+    {
+        $envLocalPath = $this->projectDir.'/.env.local';
+        $this->filesystem->dumpFile($envLocalPath, "TEST_KEY=old_value\nOTHER_KEY=other\n");
 
         $this->manager->setToggle('TEST_KEY', 'new_value');
-        self::assertStringContainsString('TEST_KEY=new_value', $this->filesystem->readFile($envLocalPath));
-        self::assertStringNotContainsString('TEST_KEY=test_value', $this->filesystem->readFile($envLocalPath));
+
+        $content = $this->filesystem->readFile($envLocalPath);
+        self::assertStringContainsString('TEST_KEY=new_value', $content);
+        self::assertStringContainsString('OTHER_KEY=other', $content);
+        self::assertStringNotContainsString('TEST_KEY=old_value', $content);
+    }
+
+    public function testSetToggleAppendsNewKey(): void
+    {
+        $envLocalPath = $this->projectDir.'/.env.local';
+        $this->filesystem->dumpFile($envLocalPath, "EXISTING_KEY=existing\n");
+
+        $this->manager->setToggle('NEW_KEY', 'new_value');
+
+        $content = $this->filesystem->readFile($envLocalPath);
+        self::assertStringContainsString('EXISTING_KEY=existing', $content);
+        self::assertStringContainsString('NEW_KEY=new_value', $content);
     }
 
     public function testGetCurrentConfig(): void
