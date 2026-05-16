@@ -41,6 +41,7 @@
 ###> os-ide ###
 .idea/
 .vscode/
+.intelephense/
 .DS_Store
 Thumbs.db
 ###< os-ide ###

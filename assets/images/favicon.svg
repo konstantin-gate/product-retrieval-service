@@ -1,0 +1,19 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    path { stroke: #059669; }
+    @media (prefers-color-scheme: dark) {
+      path { stroke: #34d399; }
+    }
+  </style>
+  <!-- Hexagon -->
+  <path d="M16 2L28.1244 9V23L16 30L3.87564 23V9L16 2Z" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- Search icon (magnifying glass) -->
+  <circle cx="15" cy="15" r="4" stroke="#059669" stroke-width="2" class="search-circle"/>
+  <path d="M18 18L21 21" stroke="#059669" stroke-width="2" stroke-linecap="round" class="search-handle"/>
+  <style>
+    .search-circle, .search-handle { stroke: #059669; }
+    @media (prefers-color-scheme: dark) {
+      .search-circle, .search-handle { stroke: #34d399; }
+    }
+  </style>
+</svg>

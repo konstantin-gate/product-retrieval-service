@@ -34,9 +34,7 @@ final class ProductSeederTest extends TestCase
         self::assertCount(1, $products);
     }
 
-    /**
-     * @dataProvider provideProductCounts
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('provideProductCounts')]
     public function testGeneratedProductsHaveValidUuids(int $count): void
     {
         $products = $this->seeder->generate($count);
@@ -46,9 +44,7 @@ final class ProductSeederTest extends TestCase
         }
     }
 
-    /**
-     * @dataProvider provideProductCounts
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('provideProductCounts')]
     public function testGeneratedProductsHaveNonEmptyNames(int $count): void
     {
         $products = $this->seeder->generate($count);
@@ -58,9 +54,7 @@ final class ProductSeederTest extends TestCase
         }
     }
 
-    /**
-     * @dataProvider provideProductCounts
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('provideProductCounts')]
     public function testGeneratedProductsHavePositivePrice(int $count): void
     {
         $products = $this->seeder->generate($count);
@@ -70,9 +64,7 @@ final class ProductSeederTest extends TestCase
         }
     }
 
-    /**
-     * @dataProvider provideProductCounts
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('provideProductCounts')]
     public function testGeneratedProductsHaveNonEmptyDescriptions(int $count): void
     {
         $products = $this->seeder->generate($count);

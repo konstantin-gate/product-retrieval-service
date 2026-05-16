@@ -28,6 +28,10 @@ final class RedisCacheAdapterTest extends TestCase
 
     protected function setUp(): void
     {
+        if (!\extension_loaded('redis')) {
+            self::markTestSkipped('The redis extension is not loaded.');
+        }
+
         $redis = new \Redis();
         $redis->connect('redis', 6379);
         $redis->select(1);

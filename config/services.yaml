@@ -19,6 +19,9 @@ services:
             $cacheDir: '%env(resolve:CACHE_DIR)%'
             $counterDir: '%env(resolve:COUNTER_DIR)%'
             $counterBaseMode: '%env(resolve:COUNTER_BASE_MODE)%'
+            $redisHealth: '@app.health.redis'
+            $mysqlHealth: '@app.health.mysql'
+            $elasticSearchHealth: '@app.health.elasticsearch'
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
@@ -50,6 +53,10 @@ services:
             $dsn: '%env(resolve:REDIS_URL)%'
 
     # --- Health Check Adapters ---
+
+    App\Infrastructure\Health\MySqlHealthAdapter: '@app.health.mysql'
+    App\Infrastructure\Health\ElasticSearchHealthAdapter: '@app.health.elasticsearch'
+    App\Infrastructure\Health\RedisHealthAdapter: '@app.health.redis'
 
     app.health.mysql:
         class: App\Infrastructure\Health\MySqlHealthAdapter

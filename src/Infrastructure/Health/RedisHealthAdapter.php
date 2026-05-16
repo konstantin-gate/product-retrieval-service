@@ -17,13 +17,12 @@ final readonly class RedisHealthAdapter implements HealthCheckInterface
 
     public function isHealthy(): bool
     {
-        if (null === $this->redis) {
-            return false;
-        }
-
         try {
-            return 'PONG' === $this->redis->ping();
-        } catch (\Exception) {
+            /** @disregard P1013 — ext-redis stub missing, ping() exists at runtime */
+            $result = $this->redis->ping();
+
+            return true === $result || 'PONG' === $result;
+        } catch (\Throwable) {
             return false;
         }
     }
