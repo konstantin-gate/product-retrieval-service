@@ -1,4 +1,5 @@
 {% extends 'base.html.twig' %}
+{% import 'macros/ui.html.twig' as ui %}
 
 {% block title %}Product Search Dashboard{% endblock %}
 
@@ -26,7 +27,7 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {% for service, healthy in healthStatus %}
                 <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <span class="w-3 h-3 rounded-full {{ healthy ? 'bg-green-500' : 'bg-red-500' }}" aria-hidden="true"></span>
+                    {{ ui.led(healthy) }}
                     <div>
                         <span class="text-sm font-medium text-gray-900">{{ service|capitalize }}</span>
                         <span class="text-xs {{ healthy ? 'text-green-600' : 'text-red-600' }}">

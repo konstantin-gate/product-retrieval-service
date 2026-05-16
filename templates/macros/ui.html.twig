@@ -1,0 +1,22 @@
+{% macro led(healthy) %}
+    {% set state = healthy ? 'on' : 'off' %}
+    {% set colorCenter = healthy ? '#4ade80' : '#f87171' %}
+    {% set colorEdge = healthy ? '#166534' : '#991b1b' %}
+    <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+        <defs>
+            <radialGradient id="led-glare-{{ state }}" cx="35%" cy="35%" r="60%">
+                <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>
+                <stop offset="40%" stop-color="#ffffff" stop-opacity="0.15"/>
+                <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="led-shadow-{{ state }}" cx="50%" cy="50%" r="50%">
+                <stop offset="40%" stop-color="{{ colorCenter }}"/>
+                <stop offset="100%" stop-color="{{ colorEdge }}"/>
+            </radialGradient>
+        </defs>
+        <!-- Основной шар с тенью по краям -->
+        <circle cx="12" cy="12" r="10" fill="url(#led-shadow-{{ state }})" />
+        <!-- Блик стекла поверх -->
+        <circle cx="12" cy="12" r="10" fill="url(#led-glare-{{ state }})" />
+    </svg>
+{% endmacro %}
