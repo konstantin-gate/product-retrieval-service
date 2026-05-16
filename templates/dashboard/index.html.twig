@@ -14,8 +14,8 @@
         {% endfor %}
     {% endfor %}
 
-    <div class="flex justify-between items-center mb-8">
-        <h1 data-testid="dashboard-title" class="text-3xl font-bold text-gray-900">{{ 'dashboard.title'|trans }}</h1>
+    <div class="flex w-full items-center mb-8">
+        <h1 data-testid="dashboard-title" class="text-3xl font-bold text-gray-900 flex-1">{{ 'dashboard.title'|trans }}</h1>
         <div class="flex gap-2">
             {% set currentLocale = app.request.locale|default('cs') %}
             {% if currentLocale == 'cs' %}
@@ -41,7 +41,7 @@
             <h3 class="text-sm font-medium text-gray-600 mb-2">{{ 'dashboard.system_health'|trans }}</h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {% for service, healthy in healthStatus %}
-                <div data-testid="health-service-{{ service|lower }}" class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <div data-testid="health-service-{{ service|lower }}" class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
                     {{ ui.led(healthy) }}
                     <div>
                         <span class="text-sm font-medium text-gray-900">{{ ('health.service.' ~ service)|trans }}</span>
@@ -55,25 +55,27 @@
         </div>
 
         <div data-testid="data-generation" class="mb-6">
-            <h3 class="text-sm font-medium text-gray-600 mb-2">{{ 'dashboard.data_generation'|trans }}</h3>
-            <form method="post" action="{{ path('dashboard_seed') }}"
-                  x-data="{ seeding: false }"
-                  @submit="seeding = true">
-                <input type="hidden" name="_token" value="{{ csrf_token('seed') }}">
-                <input type="hidden" name="count" value="1000">
-                <button data-testid="generate-data-btn" type="submit"
-                        :disabled="seeding"
-                        class="bg-emerald-700 text-white px-4 py-2 rounded-lg hover:bg-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm">
-                    <span x-show="!seeding">{{ 'dashboard.generate_data'|trans }}</span>
-                    <span x-show="seeding" class="flex items-center gap-2">
-                        <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        {{ 'dashboard.seeding'|trans }}
-                    </span>
-                </button>
-            </form>
+            <div class="flex items-center gap-3">
+                <h3 class="text-sm font-medium text-gray-600 w-52">{{ 'dashboard.data_generation'|trans }}</h3>
+                <form method="post" action="{{ path('dashboard_seed') }}"
+                      x-data="{ seeding: false }"
+                      @submit="seeding = true">
+                    <input type="hidden" name="_token" value="{{ csrf_token('seed') }}">
+                    <input type="hidden" name="count" value="1000">
+                    <button data-testid="generate-data-btn" type="submit"
+                            :disabled="seeding"
+                            class="bg-emerald-700 text-white px-4 py-2 rounded-lg hover:bg-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm">
+                        <span x-show="!seeding">{{ 'dashboard.generate_data'|trans }}</span>
+                        <span x-show="seeding" class="flex items-center gap-2">
+                            <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            {{ 'dashboard.seeding'|trans }}
+                        </span>
+                    </button>
+                </form>
+            </div>
         </div>
 
         <div data-testid="configuration">
