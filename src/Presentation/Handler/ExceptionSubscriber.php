@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 
 #[AsEventListener(event: 'kernel.exception', priority: 100)]
-final class ExceptionSubscriber
+final readonly class ExceptionSubscriber
 {
     public function onKernelException(ExceptionEvent $event): void
     {

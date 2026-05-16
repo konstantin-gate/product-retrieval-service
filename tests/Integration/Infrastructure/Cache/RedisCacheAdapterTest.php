@@ -98,23 +98,4 @@ final class RedisCacheAdapterTest extends TestCase
 
         self::assertNull($this->cache->get('key'));
     }
-
-    public function testDelete(): void
-    {
-        $dto = $this->createDto();
-        $normalized = [
-            'id' => $dto->id->value(),
-            'name' => $dto->name,
-            'price' => $dto->price->amount(),
-            'description' => $dto->description,
-        ];
-
-        $this->serializer->method('normalize')->willReturn($normalized);
-        $this->serializer->method('denormalize')->willReturn($dto);
-
-        $this->cache->set('key', $dto);
-        $this->cache->delete('key');
-
-        self::assertNull($this->cache->get('key'));
-    }
 }

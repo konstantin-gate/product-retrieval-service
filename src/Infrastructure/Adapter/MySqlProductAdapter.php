@@ -8,6 +8,7 @@ use App\Domain\Contract\IMysqlDriver;
 use App\Domain\Contract\ProductSourceInterface;
 use App\Domain\DTO\ProductDTO;
 use App\Domain\ValueObject\ProductId;
+use App\Infrastructure\Factory\ProductDTOFactory;
 
 /**
  * MySQL-based product source adapter.
@@ -27,7 +28,7 @@ final readonly class MySqlProductAdapter implements ProductSourceInterface
     {
         $data = $this->driver->findProduct($id->value());
 
-        return ProductDTO::fromArray($data);
+        return ProductDTOFactory::fromArray($data);
     }
 
     public function findSampleIds(int $limit): array

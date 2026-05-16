@@ -13,7 +13,7 @@ use Symfony\Component\Uid\Uuid;
 /**
  * Generates fake ProductDTO objects for seeding purposes.
  */
-final class ProductSeeder
+final readonly class ProductSeeder
 {
     private const MIN_PRICE_MINOR = 10000;
     private const MAX_PRICE_MINOR = 1000000;

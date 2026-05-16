@@ -84,6 +84,9 @@ final class ProductEndpointTest extends WebTestCase
 
         $id = '550e8400-e29b-41d4-a716-446655442222';
 
+        $redis = $container->get(\Redis::class);
+        $redis->del('counter:'.$id);
+
         $stmt = $pdo->prepare('REPLACE INTO products (id, name, price, description) VALUES (:id, :name, :price, :description)');
         $stmt->execute([
             ':id' => $id,

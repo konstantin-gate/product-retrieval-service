@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Application\Service;
 
 use App\Domain\Contract\ConfigInterface;
+use App\Domain\Contract\EnvFileWriterInterface;
 use App\Domain\Contract\HealthCheckInterface;
-use App\Domain\Contract\ProductSourceInterface;
+use App\Domain\Contract\SampleIdProviderInterface;
 use App\Domain\Contract\SeederInterface;
-use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Manages runtime configuration toggles and persists changes to .env.local.
@@ -16,20 +16,20 @@ use Symfony\Component\Filesystem\Filesystem;
 final readonly class DashboardManager
 {
     /**
-     * @param string                 $projectDir          Root directory of the project
-     * @param Filesystem             $filesystem          Symfony Filesystem component
-     * @param ConfigInterface        $config              Application configuration
-     * @param ProductSourceInterface $source              Active product source
-     * @param HealthCheckInterface   $mysqlHealth         MySQL health-check adapter
-     * @param HealthCheckInterface   $elasticSearchHealth ElasticSearch health-check adapter
-     * @param HealthCheckInterface   $redisHealth         Redis health-check adapter
-     * @param SeederInterface        $seeder              Product seeder
+     * @param string                    $projectDir          Root directory of the project
+     * @param EnvFileWriterInterface    $envFileWriter       Environment file writer port
+     * @param ConfigInterface           $config              Application configuration
+     * @param SampleIdProviderInterface $source              Sample ID provider
+     * @param HealthCheckInterface      $mysqlHealth         MySQL health-check adapter
+     * @param HealthCheckInterface      $elasticSearchHealth ElasticSearch health-check adapter
+     * @param HealthCheckInterface      $redisHealth         Redis health-check adapter
+     * @param SeederInterface           $seeder              Product seeder
      */
     public function __construct(
         private string $projectDir,
-        private Filesystem $filesystem,
+        private EnvFileWriterInterface $envFileWriter,
         private ConfigInterface $config,
-        private ProductSourceInterface $source,
+        private SampleIdProviderInterface $source,
         private HealthCheckInterface $mysqlHealth,
         private HealthCheckInterface $elasticSearchHealth,
         private HealthCheckInterface $redisHealth,
@@ -51,8 +51,8 @@ final readonly class DashboardManager
         $envLocalPath = $this->projectDir.'/.env.local';
         $lines = [];
 
-        if ($this->filesystem->exists($envLocalPath)) {
-            $content = $this->filesystem->readFile($envLocalPath);
+        $content = $this->envFileWriter->readFile($envLocalPath);
+        if ('' !== $content) {
             $lines = \explode("\n", $content);
         }
 
@@ -63,7 +63,12 @@ final readonly class DashboardManager
                 continue;
             }
             if (\str_starts_with($trimmed, $key.'=')) {
-                $lines[$index] = $key.'='.$value;
+                $oldValue = \substr($line, \strpos($line, '=') + 1);
+                if (\str_starts_with($oldValue, '"') && \str_ends_with($oldValue, '"')) {
+                    $lines[$index] = $key.'="'.$value.'"';
+                } else {
+                    $lines[$index] = $key.'='.$value;
+                }
                 $keyFound = true;
 
                 break;
@@ -74,8 +79,7 @@ final readonly class DashboardManager
             $lines[] = $key.'='.$value;
         }
 
-        $filtered = \array_filter($lines, static fn (string $line): bool => '' !== \trim($line));
-        $this->filesystem->dumpFile($envLocalPath, \implode("\n", $filtered)."\n");
+        $this->envFileWriter->writeFile($envLocalPath, \implode("\n", $lines)."\n");
     }
 
     /**

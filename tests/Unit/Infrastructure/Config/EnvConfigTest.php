@@ -44,20 +44,6 @@ final class EnvConfigTest extends TestCase
         self::assertTrue($this->config->getBool('key'));
     }
 
-    public function testHasReturnsTrueForExistingKey(): void
-    {
-        $this->parameterBag->method('has')->with('key')->willReturn(true);
-
-        self::assertTrue($this->config->has('key'));
-    }
-
-    public function testHasReturnsFalseForMissingKey(): void
-    {
-        $this->parameterBag->method('has')->with('key')->willReturn(false);
-
-        self::assertFalse($this->config->has('key'));
-    }
-
     public function testGetDataSourceReturnsMysql(): void
     {
         $this->parameterBag->method('get')->with('app.active_product_source')->willReturn('mysql');

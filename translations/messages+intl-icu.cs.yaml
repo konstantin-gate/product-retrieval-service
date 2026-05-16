@@ -63,6 +63,7 @@ error:
     invalid_csrf: 'Neplatný CSRF token'
     unknown_toggle_key: 'Neznámý klíč přepínače'
     invalid_toggle_value: 'Neplatná hodnota přepínače'
+    rate_limit: 'Příliš mnoho požadavků. Zkuste to prosím později.'
 
 cli:
     seed:

@@ -7,7 +7,7 @@ namespace App\Infrastructure\Factory;
 /**
  * Factory for creating pre-configured Redis connections from a DSN string.
  */
-final class RedisConnectionFactory
+final readonly class RedisConnectionFactory
 {
     /**
      * Creates a Redis connection from a DSN string.

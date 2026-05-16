@@ -28,34 +28,4 @@ final readonly class ProductDTO
         public string $description,
     ) {
     }
-
-    /**
-     * Creates a ProductDTO from a raw data array.
-     *
-     * @param array<string, mixed> $data Raw product data with keys: id, name, price, description
-     *
-     * @throws \InvalidArgumentException if required keys are missing
-     */
-    public static function fromArray(array $data): self
-    {
-        if (!\array_key_exists('id', $data)) {
-            throw new \InvalidArgumentException('Missing key: id');
-        }
-        if (!\array_key_exists('name', $data)) {
-            throw new \InvalidArgumentException('Missing key: name');
-        }
-        if (!\array_key_exists('price', $data)) {
-            throw new \InvalidArgumentException('Missing key: price');
-        }
-        if (!\array_key_exists('description', $data)) {
-            throw new \InvalidArgumentException('Missing key: description');
-        }
-
-        return new self(
-            ProductId::fromString((string) $data['id']),
-            (string) $data['name'],
-            Price::of((string) $data['price']),
-            (string) $data['description'],
-        );
-    }
 }

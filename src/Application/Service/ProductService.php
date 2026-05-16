@@ -31,6 +31,7 @@ final readonly class ProductService
         private CacheInterface $cache,
         private CounterInterface $counter,
         private ConfigInterface $config,
+        private int $cacheTtl,
     ) {
     }
 
@@ -45,20 +46,7 @@ final readonly class ProductService
      */
     public function getProduct(ProductId $id): ProductDTO
     {
-        $this->counter->increment($id);
-
-        $cacheKey = 'product_'.$id->value();
-        $cached = $this->cache->get($cacheKey);
-
-        if (null !== $cached) {
-            return $cached;
-        }
-
-        $product = $this->source->findById($id);
-
-        $this->cache->set($cacheKey, $product);
-
-        return $product;
+        return $this->getProductWithTrace($id)->product;
     }
 
     /**
@@ -71,6 +59,16 @@ final readonly class ProductService
     public function getCount(ProductId $id): int
     {
         return $this->counter->getCount($id);
+    }
+
+    /**
+     * Returns the optimistic display count: actual + 1 when async mode is active.
+     */
+    private function getOptimisticCount(ProductId $id): int
+    {
+        $actual = $this->counter->getCount($id);
+
+        return 'async' === $this->config->getCounterMode() ? $actual + 1 : $actual;
     }
 
     /**
@@ -115,6 +113,7 @@ final readonly class ProductService
                 cacheHit: true,
                 source: $this->config->getDataSource(),
                 executionLog: $log,
+                optimisticCount: $this->getOptimisticCount($id),
             );
         }
 
@@ -123,7 +122,7 @@ final readonly class ProductService
         $product = $this->source->findById($id);
         $log[] = '[Source] Query to '.$this->config->getDataSource().' executed';
 
-        $this->cache->set($cacheKey, $product);
+        $this->cache->set($cacheKey, $product, $this->cacheTtl);
         $log[] = '[Cache] Data written to '.$this->config->getCacheDriver();
 
         return new ProductWithTraceDTO(
@@ -131,6 +130,7 @@ final readonly class ProductService
             cacheHit: false,
             source: $this->config->getDataSource(),
             executionLog: $log,
+            optimisticCount: $this->getOptimisticCount($id),
         );
     }
 }

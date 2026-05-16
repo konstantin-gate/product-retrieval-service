@@ -30,7 +30,12 @@ final readonly class Price
      */
     public static function of(string $amount): self
     {
-        return new self(Money::ofMinor($amount, self::DEFAULT_CURRENCY));
+        $money = Money::ofMinor($amount, self::DEFAULT_CURRENCY);
+        if ($money->isNegative()) {
+            throw new \InvalidArgumentException('Price amount cannot be negative');
+        }
+
+        return new self($money);
     }
 
     /**

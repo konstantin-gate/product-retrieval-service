@@ -28,9 +28,4 @@ interface CacheInterface
      * @param int|null   $ttl   Time-to-live in seconds, or null for permanent cache
      */
     public function set(string $key, ProductDTO $value, ?int $ttl = null): void;
-
-    /**
-     * Removes a cached product by key.
-     */
-    public function delete(string $key): void;
 }

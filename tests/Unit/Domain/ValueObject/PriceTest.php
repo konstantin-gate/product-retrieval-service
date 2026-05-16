@@ -26,10 +26,10 @@ final class PriceTest extends TestCase
         self::assertSame('0', $price->amount());
     }
 
-    public function testNegativePrice(): void
+    public function testNegativePriceThrows(): void
     {
-        $price = Price::of('-100');
-        self::assertSame('-100', $price->amount());
+        $this->expectException(\InvalidArgumentException::class);
+        Price::of('-100');
     }
 
     public function testNonNumericThrows(): void

@@ -20,7 +20,12 @@ final readonly class SeederAdapter implements SeederInterface
 
     public function seed(int $count): void
     {
+        $this->seedWithCallback($count, null);
+    }
+
+    public function seedWithCallback(int $count, ?\Closure $onChunk): void
+    {
         $products = $this->productSeeder->generate($count);
-        $this->dataSeederService->seed($products);
+        $this->dataSeederService->seed($products, $onChunk);
     }
 }

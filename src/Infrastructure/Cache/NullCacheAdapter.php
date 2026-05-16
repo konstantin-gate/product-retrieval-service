@@ -22,8 +22,4 @@ final readonly class NullCacheAdapter implements CacheInterface
     public function set(string $key, ProductDTO $value, ?int $ttl = null): void
     {
     }
-
-    public function delete(string $key): void
-    {
-    }
 }

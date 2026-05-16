@@ -75,12 +75,21 @@ services:
 
     # --- Application ---
 
+    App\Domain\Contract\EnvFileWriterInterface:
+        class: App\Infrastructure\Adapter\EnvFileWriterAdapter
+
+    App\Domain\Contract\SampleIdProviderInterface: '@App\Domain\Contract\ProductSourceInterface'
+
     App\Application\Service\DashboardManager:
         arguments:
             $mysqlHealth: '@app.health.mysql'
             $elasticSearchHealth: '@app.health.elasticsearch'
             $redisHealth: '@app.health.redis'
             $seeder: '@App\Domain\Contract\SeederInterface'
+
+    App\Application\Service\ProductService:
+        arguments:
+            $cacheTtl: '%env(int:CACHE_TTL)%'
 
     # --- Commands ---
 

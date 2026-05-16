@@ -6,13 +6,14 @@ namespace App\Infrastructure\Health;
 
 use App\Domain\Contract\HealthCheckInterface;
 use Elastic\Elasticsearch\Client;
+use Psr\Log\LoggerInterface;
 
 /**
  * Health-check adapter for ElasticSearch.
  */
 final readonly class ElasticSearchHealthAdapter implements HealthCheckInterface
 {
-    public function __construct(private Client $client)
+    public function __construct(private Client $client, private LoggerInterface $logger)
     {
     }
 
@@ -22,7 +23,9 @@ final readonly class ElasticSearchHealthAdapter implements HealthCheckInterface
             $this->client->info();
 
             return true;
-        } catch (\Exception) {
+        } catch (\Exception $e) {
+            $this->logger->warning('ElasticSearch health check failed: '.$e->getMessage());
+
             return false;
         }
     }

@@ -6,9 +6,11 @@ namespace App\Tests\Unit\Application\Service;
 
 use App\Application\Service\DashboardManager;
 use App\Domain\Contract\ConfigInterface;
+use App\Domain\Contract\EnvFileWriterInterface;
 use App\Domain\Contract\HealthCheckInterface;
 use App\Domain\Contract\ProductSourceInterface;
 use App\Domain\Contract\SeederInterface;
+use App\Infrastructure\Adapter\EnvFileWriterAdapter;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Filesystem\Filesystem;
@@ -20,6 +22,7 @@ final class DashboardManagerTest extends TestCase
 {
     private string $projectDir;
     private Filesystem $filesystem;
+    private EnvFileWriterInterface $envFileWriter;
     private ConfigInterface&MockObject $config;
     private ProductSourceInterface&MockObject $source;
     private HealthCheckInterface&MockObject $mysqlHealth;
@@ -33,6 +36,7 @@ final class DashboardManagerTest extends TestCase
         $this->projectDir = \sys_get_temp_dir().'/logio_test_'.\uniqid();
         \mkdir($this->projectDir);
         $this->filesystem = new Filesystem();
+        $this->envFileWriter = new EnvFileWriterAdapter($this->filesystem);
         $this->config = $this->createMock(ConfigInterface::class);
         $this->source = $this->createMock(ProductSourceInterface::class);
         $this->mysqlHealth = $this->createMock(HealthCheckInterface::class);
@@ -42,7 +46,7 @@ final class DashboardManagerTest extends TestCase
 
         $this->manager = new DashboardManager(
             $this->projectDir,
-            $this->filesystem,
+            $this->envFileWriter,
             $this->config,
             $this->source,
             $this->mysqlHealth,

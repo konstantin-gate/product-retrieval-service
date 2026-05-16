@@ -19,8 +19,8 @@ final readonly class PdoConnectionFactory
         }
 
         $host = $parsed['host'];
-        /** @phpstan-ignore-next-line */
-        $port = \array_key_exists('port', $parsed) ? (int) $parsed['port'] : 3306;
+        $maybePort = $parsed['port'] ?? null;
+        $port = \is_int($maybePort) ? $maybePort : 3306;
         $dbname = ltrim($parsed['path'], '/');
         $user = \array_key_exists('user', $parsed) ? $parsed['user'] : 'root';
         $password = \array_key_exists('pass', $parsed) ? $parsed['pass'] : '';

@@ -30,7 +30,7 @@ final class ProductServiceTest extends TestCase
         $this->cache = $this->createMock(CacheInterface::class);
         $this->counter = $this->createMock(CounterInterface::class);
         $this->config = $this->createMock(ConfigInterface::class);
-        $this->service = new ProductService($this->source, $this->cache, $this->counter, $this->config);
+        $this->service = new ProductService($this->source, $this->cache, $this->counter, $this->config, 3600);
     }
 
     public function testGetProductCacheHit(): void
@@ -55,7 +55,7 @@ final class ProductServiceTest extends TestCase
         $this->counter->expects($this->once())->method('increment')->with($id);
         $this->cache->expects($this->once())->method('get')->with('product_'.$id->value())->willReturn(null);
         $this->source->expects($this->once())->method('findById')->with($id)->willReturn($product);
-        $this->cache->expects($this->once())->method('set')->with('product_'.$id->value(), $product);
+        $this->cache->expects($this->once())->method('set')->with('product_'.$id->value(), $product, 3600);
 
         $result = $this->service->getProduct($id);
 

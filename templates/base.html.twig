@@ -16,8 +16,8 @@
             {% set frankenphpHotReload = app.request.server.get('FRANKENPHP_HOT_RELOAD') %}
             {% if frankenphpHotReload %}
             <meta name="frankenphp-hot-reload:url" content="{{ frankenphpHotReload }}">
-            <script src="https://cdn.jsdelivr.net/npm/idiomorph"></script>
-            <script src="https://cdn.jsdelivr.net/npm/frankenphp-hot-reload/+esm" type="module"></script>
+            <script src="{{ asset('vendor/idiomorph.js') }}"></script>
+            <script src="{{ asset('vendor/frankenphp-hot-reload.js') }}" type="module"></script>
             {% endif %}
         {% endif %}
     </head>

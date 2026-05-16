@@ -19,16 +19,18 @@ use App\Domain\DTO\ProductDTO;
 final readonly class ProductWithTraceDTO
 {
     /**
-     * @param ProductDTO   $product      The retrieved product
-     * @param bool         $cacheHit     Whether the product was served from cache
-     * @param string       $source       Data source name (e.g. "elasticsearch", "mysql")
-     * @param list<string> $executionLog Ordered list of execution step descriptions
+     * @param ProductDTO   $product         The retrieved product
+     * @param bool         $cacheHit        Whether the product was served from cache
+     * @param string       $source          Data source name (e.g. "elasticsearch", "mysql")
+     * @param list<string> $executionLog    Ordered list of execution step descriptions
+     * @param int          $optimisticCount Optimistic view count for async mode display
      */
     public function __construct(
         public ProductDTO $product,
         public bool $cacheHit,
         public string $source,
         public array $executionLog,
+        public int $optimisticCount,
     ) {
     }
 }

@@ -27,11 +27,6 @@ interface ConfigInterface
     public function getBool(string $key): bool;
 
     /**
-     * Checks whether a configuration key exists.
-     */
-    public function has(string $key): bool;
-
-    /**
      * Returns the active product data source name (e.g. "mysql", "elasticsearch").
      */
     public function getDataSource(): string;

@@ -12,7 +12,7 @@ use Symfony\Component\HttpKernel\KernelEvents;
  * Restores the locale from the session on each request.
  * Must run after the SessionListener so that the session is available.
  */
-final class LocaleSubscriber implements EventSubscriberInterface
+final readonly class LocaleSubscriber implements EventSubscriberInterface
 {
     public static function getSubscribedEvents(): array
     {

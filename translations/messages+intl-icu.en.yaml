@@ -63,6 +63,7 @@ error:
     invalid_csrf: 'Invalid CSRF token'
     unknown_toggle_key: 'Unknown toggle key'
     invalid_toggle_value: 'Invalid toggle value'
+    rate_limit: 'Too many requests. Please try again later.'
 
 cli:
     seed:

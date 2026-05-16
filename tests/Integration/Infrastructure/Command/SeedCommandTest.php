@@ -6,6 +6,7 @@ namespace App\Tests\Integration\Infrastructure\Command;
 
 use App\Infrastructure\Command\SeedCommand;
 use App\Infrastructure\Seeder\ProductSeeder;
+use App\Infrastructure\Seeder\SeederAdapter;
 use App\Infrastructure\Service\DataSeederService;
 use Elastic\Elasticsearch\ClientBuilder;
 use PHPUnit\Framework\TestCase;
@@ -51,8 +52,7 @@ final class SeedCommandTest extends TestCase
             'refresh' => true,
         ]);
 
-        $seeder = new ProductSeeder();
-        $dataSeeder = new DataSeederService($this->pdo, $this->client);
+        $seeder = new SeederAdapter(new ProductSeeder(), new DataSeederService($this->pdo, $this->client));
 
         $translator = $this->createMock(\Symfony\Contracts\Translation\TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(function (string $id, array $parameters = []): string {
@@ -65,7 +65,7 @@ final class SeedCommandTest extends TestCase
         });
 
         $application = new Application();
-        $application->addCommand(new SeedCommand($seeder, $dataSeeder, 10, $translator));
+        $application->addCommand(new SeedCommand($seeder, 10, $translator));
 
         $command = $application->find('app:seed');
         $this->commandTester = new CommandTester($command);

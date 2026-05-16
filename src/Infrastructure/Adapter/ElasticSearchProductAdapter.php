@@ -8,6 +8,7 @@ use App\Domain\Contract\IElasticSearchDriver;
 use App\Domain\Contract\ProductSourceInterface;
 use App\Domain\DTO\ProductDTO;
 use App\Domain\ValueObject\ProductId;
+use App\Infrastructure\Factory\ProductDTOFactory;
 
 /**
  * ElasticSearch-based product source adapter.
@@ -29,7 +30,7 @@ final readonly class ElasticSearchProductAdapter implements ProductSourceInterfa
     {
         $data = $this->driver->findById($id->value());
 
-        return ProductDTO::fromArray($data);
+        return ProductDTOFactory::fromArray($data);
     }
 
     public function findSampleIds(int $limit): array
@@ -41,9 +42,13 @@ final readonly class ElasticSearchProductAdapter implements ProductSourceInterfa
             'query' => ['match_all' => (object) []],
         ]);
 
+        if (!\array_key_exists('hits', $response) || !\is_array($response['hits']) || !\array_key_exists('hits', $response['hits'])) {
+            throw new \RuntimeException('Unexpected ElasticSearch response structure in findSampleIds');
+        }
+
         $ids = [];
         /** @var array<string, mixed> $hit */
-        foreach ($response['hits']['hits'] ?? [] as $hit) {
+        foreach ($response['hits']['hits'] as $hit) {
             if (\array_key_exists('_id', $hit) && null !== $hit['_id']) {
                 $ids[] = (string) $hit['_id'];
             }

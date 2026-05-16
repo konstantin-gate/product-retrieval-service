@@ -33,11 +33,6 @@ final readonly class EnvConfig implements ConfigInterface
         return (bool) $this->parameterBag->get($key);
     }
 
-    public function has(string $key): bool
-    {
-        return $this->parameterBag->has($key);
-    }
-
     public function getDataSource(): string
     {
         return $this->getString('app.active_product_source');

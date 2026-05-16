@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Presentation\Controller;
 
-use App\Domain\Contract\ConfigInterface;
 use App\Application\Service\ProductService;
 use App\Domain\ValueObject\ProductId;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -19,7 +18,6 @@ final class ProductController extends AbstractController
     public function __construct(
         private ProductService $productService,
         private SerializerInterface $serializer,
-        private ConfigInterface $config,
     ) {
     }
 
@@ -30,18 +28,14 @@ final class ProductController extends AbstractController
         $startTime = microtime(true);
 
         $result = $this->productService->getProductWithTrace($productId);
-        $actualCount = $this->productService->getCount($productId);
         $ttfbMs = round((microtime(true) - $startTime) * 1000, 2);
 
         if ($request->headers->has('Turbo-Frame')) {
-            $isAsync = $this->config->getCounterMode() === 'async';
-            $displayCount = $isAsync ? $actualCount + 1 : $actualCount;
-
             return $this->render('product/_frame.html.twig', [
                 'product' => $result->product,
                 'trace' => $result,
                 'ttfbMs' => $ttfbMs,
-                'initialCount' => $displayCount,
+                'initialCount' => $result->optimisticCount,
             ]);
         }
 
@@ -56,6 +50,8 @@ final class ProductController extends AbstractController
         $productId = ProductId::fromString($id);
         $count = $this->productService->getCount($productId);
 
-        return new JsonResponse(['count' => $count]);
+        $json = $this->serializer->serialize(['count' => $count], 'json');
+
+        return JsonResponse::fromJsonString($json);
     }
 }

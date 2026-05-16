@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Command;
 
-use App\Infrastructure\Seeder\ProductSeeder;
-use App\Infrastructure\Service\DataSeederService;
+use App\Domain\Contract\SeederInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\ProgressBar;
@@ -17,9 +16,10 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[AsCommand(name: 'app:seed', description: 'Generate fake product data')]
 final class SeedCommand extends Command
 {
+    private const SEED_STAGES = 2;
+
     public function __construct(
-        private ProductSeeder $seeder,
-        private DataSeederService $dataSeeder,
+        private SeederInterface $seeder,
         private int $defaultSeedCount,
         private ?TranslatorInterface $translator = null,
     ) {
@@ -48,11 +48,10 @@ final class SeedCommand extends Command
     {
         $count = (int) $input->getOption('count');
 
-        $progressBar = new ProgressBar($output, $count);
+        $progressBar = new ProgressBar($output, $count * self::SEED_STAGES);
         $progressBar->start();
 
-        $products = $this->seeder->generate($count);
-        $this->dataSeeder->seed($products, function (int $chunkSize) use ($progressBar): void {
+        $this->seeder->seedWithCallback($count, function (int $chunkSize) use ($progressBar): void {
             $progressBar->advance($chunkSize);
         });
 

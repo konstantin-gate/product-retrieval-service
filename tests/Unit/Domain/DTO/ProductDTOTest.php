@@ -6,6 +6,7 @@ namespace App\Tests\Unit\Domain\DTO;
 
 use App\Domain\DTO\ProductDTO;
 use App\Domain\Exception\InvalidProductIdException;
+use App\Infrastructure\Factory\ProductDTOFactory;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -15,7 +16,7 @@ final class ProductDTOTest extends TestCase
 {
     public function testFromArrayValid(): void
     {
-        $dto = ProductDTO::fromArray([
+        $dto = ProductDTOFactory::fromArray([
             'id' => '550e8400-e29b-41d4-a716-446655440000',
             'name' => 'Test Product',
             'price' => '145000',
@@ -31,7 +32,7 @@ final class ProductDTOTest extends TestCase
     public function testFromArrayMissingKey(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        ProductDTO::fromArray([
+        ProductDTOFactory::fromArray([
             'id' => '550e8400-e29b-41d4-a716-446655440000',
             'price' => '100',
             'description' => 'Desc',
@@ -41,7 +42,7 @@ final class ProductDTOTest extends TestCase
     public function testFromArrayInvalidId(): void
     {
         $this->expectException(InvalidProductIdException::class);
-        ProductDTO::fromArray([
+        ProductDTOFactory::fromArray([
             'id' => 'not-a-uuid',
             'name' => 'Test',
             'price' => '100',

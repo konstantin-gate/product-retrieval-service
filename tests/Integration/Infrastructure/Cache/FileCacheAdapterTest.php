@@ -82,25 +82,6 @@ final class FileCacheAdapterTest extends TestCase
         self::assertNull($this->cache->get('nonexistent'));
     }
 
-    public function testDeleteRemovesCachedItem(): void
-    {
-        $dto = $this->createDto();
-        $normalized = [
-            'id' => $dto->id->value(),
-            'name' => $dto->name,
-            'price' => $dto->price->amount(),
-            'description' => $dto->description,
-        ];
-
-        $this->serializer->method('normalize')->willReturn($normalized);
-        $this->serializer->method('denormalize')->willReturn($dto);
-
-        $this->cache->set('key', $dto);
-        $this->cache->delete('key');
-
-        self::assertNull($this->cache->get('key'));
-    }
-
     public function testSetWithTtlExpires(): void
     {
         $dto = $this->createDto();

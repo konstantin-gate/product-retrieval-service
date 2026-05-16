@@ -67,18 +67,4 @@ final readonly class FileCacheAdapter implements CacheInterface
             throw new CacheException('Cache write error: '.$e->getMessage(), 0, $e);
         }
     }
-
-    /**
-     * Removes a cached product by key.
-     *
-     * @throws CacheException if cache delete fails
-     */
-    public function delete(string $key): void
-    {
-        try {
-            $this->cache->deleteItem($key);
-        } catch (\Exception $e) {
-            throw new CacheException('Cache delete error: '.$e->getMessage(), 0, $e);
-        }
-    }
 }

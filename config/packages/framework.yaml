@@ -7,7 +7,9 @@ framework:
     # Note that the session will be started ONLY if you read or write from it.
     session: true
 
-    csrf_protection: true
+    csrf_protection:
+        enabled: true
+        check_header: true
 
     #esi: true
     #fragments: true
@@ -15,6 +17,16 @@ framework:
     serializer:
         enabled: true
         name_converter: ~
+
+    rate_limiter:
+        dashboard_toggle:
+            policy: fixed_window
+            limit: 10
+            interval: '1 minute'
+        dashboard_seed:
+            policy: fixed_window
+            limit: 5
+            interval: '1 minute'
 
 when@test:
     framework:
