@@ -33,7 +33,7 @@ Aplikace poskytuje:
 | `symfony/filesystem` | `7.4.*` | Jediný povolený způsob zápisu souborů (kromě `.env.local` přes `dumpFile()`) |
 | `fakerphp/faker` | `^1.24` | Generování testovacích dat (pouze dev) |
 | `friendsofphp/php-cs-fixer` | `^3.95` | Autoformátování podle PSR-12 + Symfony pravidla |
-| `phpstan/phpstan` + `phpstan-strict-rules` | `^2.1` / `^2.0` | Statická analýza, úroveň 6 |
+| `phpstan/phpstan` + `phpstan-strict-rules` | `^2.1` / `^2.0` | Statická analýza, úroveň 9 |
 | `phpunit/phpunit` | `^11.5` | Testování |
 
 ### 2.2 Frontend
@@ -77,7 +77,7 @@ Presentation → Application → Domain ← Infrastructure
 ```
 src/
 ├── Domain/
-│   ├── Contract/          # Porty (rozhraní): ProductSourceInterface, CacheInterface, CounterInterface, ConfigInterface, HealthCheckInterface, SeederInterface, SyncCounterInterface, IElasticSearchDriver, IMysqlDriver
+│   ├── Contract/          # Porty (rozhraní): ProductSourceInterface, CacheInterface, CounterInterface, ConfigInterface, HealthCheckInterface, SeederInterface, SyncCounterInterface, SampleIdProviderInterface, EnvFileWriterInterface, IElasticSearchDriver, IMysqlDriver
 │   ├── DTO/               # Data Transfer Objects: ProductDTO
 │   ├── Exception/         # Domain výjimky: InvalidProductIdException, ProductNotFoundException, SourceUnavailableException, CacheException, CounterException, QueueException
 │   └── ValueObject/       # Immutable Value Objects: ProductId, Price
@@ -85,14 +85,14 @@ src/
 │   ├── DTO/               # ProductWithTraceDTO
 │   └── Service/           # Orchestrace use-case: ProductService, DashboardManager
 ├── Infrastructure/
-│   ├── Adapter/           # ElasticSearchProductAdapter, MySqlProductAdapter
+│   ├── Adapter/           # ElasticSearchProductAdapter, MySqlProductAdapter, EnvFileWriterAdapter
 │   ├── Cache/             # FileCacheAdapter, RedisCacheAdapter, NullCacheAdapter
 │   ├── Command/           # MigrateCommand, ElasticSearchInitCommand, SeedCommand
 │   ├── Config/            # EnvConfig
 │   ├── Counter/           # FilesystemCounter, RedisCounter, NullCounter
 │   ├── Decorator/         # AsyncCounterDecorator
 │   ├── Driver/            # SimpleElasticSearchDriver, SimpleMySqlDriver
-│   ├── Factory/           # ProductSourceFactory, CacheAdapterFactory, CounterAdapterFactory, PdoConnectionFactory, RedisConnectionFactory
+│   ├── Factory/           # ProductSourceFactory, CacheAdapterFactory, CounterAdapterFactory, PdoConnectionFactory, RedisConnectionFactory, ProductDTOFactory
 │   ├── Health/            # MySqlHealthAdapter, ElasticSearchHealthAdapter, RedisHealthAdapter
 │   ├── Message/           # CounterIncrementMessage
 │   ├── MessageHandler/    # CounterIncrementHandler
@@ -105,7 +105,7 @@ src/
     └── Handler/           # ExceptionSubscriber
 templates/                 # Twig šablony
 assets/                    # Frontend: JS (AssetMapper), CSS (Tailwind)
-tests/                     # PHPUnit: Unit (8), Integration (14), Concurrent (2), Functional (2)
+tests/                     # PHPUnit: Unit (8), Integration (14), Concurrent (3), Functional (2)
 docker/                    # Dockerfiles, Nginx konfigurace
 storage/cache/             # Adresář pro file cache (zapisovatelný)
 storage/counter/           # Adresář pro file counter (zapisovatelný)
@@ -140,7 +140,7 @@ storage/counter/           # Adresář pro file counter (zapisovatelný)
 #### `ProductDTO` (`src/Domain/DTO/ProductDTO.php:16`)
 - `final readonly` třída s constructor property promotion.
 - Pole: `ProductId $id`, `string $name`, `Price $price`, `string $description`.
-- Statická factory metoda `fromArray(array $data): self` s validací přítomnosti klíčů (`id`, `name`, `price`, `description`). Při chybějícím klíči vyhazuje `\InvalidArgumentException`.
+- Vytváření z raw dat z driverů přes `ProductDTOFactory::fromArray(array $data): ProductDTO` (`src/Infrastructure/Factory/ProductDTOFactory.php:24`) s validací přítomnosti klíčů (`id`, `name`, `price`, `description`) a kontrolou skalárních hodnot. Při chybějícím klíči vyhazuje `\InvalidArgumentException`.
 
 ### 4.3 Porty (Contracts / Interfaces)
 
@@ -148,13 +148,15 @@ Všechna rozhraní jsou umístěna v `src/Domain/Contract/`:
 
 | Rozhraní | Soubor | Účel |
 |----------|--------|------|
-| `ProductSourceInterface` | `ProductSourceInterface.php:15` | `findById(ProductId): ProductDTO`, `findSampleIds(int): list<string>` |
-| `CacheInterface` | `CacheInterface.php:14` | `get(string): ?ProductDTO`, `set(string, ProductDTO, ?int): void`, `delete(string): void` |
+| `ProductSourceInterface` | `ProductSourceInterface.php:15` | `findById(ProductId): ProductDTO`, `findSampleIds(int): list<string>`; rozšiřuje `SampleIdProviderInterface` |
+| `CacheInterface` | `CacheInterface.php:14` | `get(string): ?ProductDTO`, `set(string, ProductDTO, ?int): void` |
 | `CounterInterface` | `CounterInterface.php:14` | `increment(ProductId): void`, `getCount(ProductId): int` |
 | `SyncCounterInterface` | `SyncCounterInterface.php:14` | Marker-rozhraní, rozšiřuje `CounterInterface`; zabraňuje rekurzivní dispatche v `CounterIncrementHandler` |
-| `ConfigInterface` | `ConfigInterface.php:12` | `getString()`, `getInt()`, `getBool()`, `has()`, `getDataSource()`, `getCacheDriver()`, `getCounterMode()` |
+| `ConfigInterface` | `ConfigInterface.php:12` | `getString()`, `getInt()`, `getBool()`, `getDataSource()`, `getCacheDriver()`, `getCounterMode()`, `getEsIndexName()` |
+| `SampleIdProviderInterface` | `SampleIdProviderInterface.php:10` | `findSampleIds(int): list<string>` |
+| `EnvFileWriterInterface` | `EnvFileWriterInterface.php:11` | `readFile(string): string`, `writeFile(string, string): void` |
 | `HealthCheckInterface` | `HealthCheckInterface.php:13` | `isHealthy(): bool` |
-| `SeederInterface` | `SeederInterface.php:10` | `seed(int): void` |
+| `SeederInterface` | `SeederInterface.php:10` | `seed(int): void`, `seedWithCallback(int, ?\Closure): void` |
 | `IElasticSearchDriver` | `IElasticSearchDriver.php:12` | `findById(string): array`, `search(array): array` |
 | `IMysqlDriver` | `IMysqlDriver.php:12` | `findProduct(string): array`, `findAllIds(int): list<string>` |
 
@@ -178,22 +180,27 @@ Orchestruje scénář získání produktu:
 1. Inkrementuje počítadlo (`$counter->increment($id)`).
 2. Kontroluje cache (`$cache->get('product_'.$id->value())`).
 3. Při cache miss – dotáže se zdroje (`$source->findById($id)`).
-4. Zapíše do cache (`$cache->set(...)`, TTL = `null` – trvalé uložení, dle zadání).
+4. Zapíše do cache (`$cache->set(...)`, TTL = `$cacheTtl` z env `CACHE_TTL`).
 
 Metody:
 - `getProduct(ProductId $id): ProductDTO` – standardní tok.
 - `getCount(ProductId $id): int` – aktuální hodnota počítadla.
 - `getSampleProductIds(int $limit): list<string>` – deleguje na `$source->findSampleIds($limit)`.
-- `getProductWithTrace(ProductId $id): ProductWithTraceDTO` – rozšířený tok s execution log (cache hit/miss, zdroj, kroky), ale **bez TTFB** – TTFB se měří v kontroleru (Presentation vrstva).
+- `getProductWithTrace(ProductId $id): ProductWithTraceDTO` – rozšířený tok s execution log (cache hit/miss, zdroj, kroky), ale **bez TTFB** – TTFB se měří v kontroleru (Presentation vrstva). Vrací `optimisticCount` (actual + 1 při async režimu).
+- `getOptimisticCount(ProductId $id): int` (private) – vypočítá optimistický počet zobrazení: `$actualCount + 1` při async režimu, jinak `$actualCount`.
+
+Konstruktor: `ProductSourceInterface $source`, `CacheInterface $cache`, `CounterInterface $counter`, `ConfigInterface $config`, `int $cacheTtl`.
 
 ### 5.2 `DashboardManager` (`src/Application/Service/DashboardManager.php:16`)
 
 Správa runtime konfigurace:
-- `setToggle(string $key, string $value): void` – čte `.env.local` přes `Symfony\Component\Filesystem\Filesystem::readFile()`, aktualizuje nebo přidá proměnnou, přepíše soubor přes `Filesystem::dumpFile()` (`src/Application/Service/DashboardManager.php:78`).
+- `setToggle(string $key, string $value): void` – čte `.env.local` přes `EnvFileWriterInterface::readFile()`, aktualizuje nebo přidá proměnnou, přepíše soubor přes `EnvFileWriterInterface::writeFile()` (`src/Application/Service/DashboardManager.php:85`).
 - `getCurrentConfig(): array` – vrací aktuální zdroj, cache a režim počítadla.
 - `getHealthStatus(): array` – kontroluje MySQL, ElasticSearch, Redis přes `HealthCheckInterface`.
-- `getSampleProductIds(int $limit): list<string>` – deleguje na `ProductSourceInterface`.
+- `getSampleProductIds(int $limit): list<string>` – deleguje na `SampleIdProviderInterface`.
 - `seed(int $count): void` – deleguje na `SeederInterface`.
+
+Konstruktor: `string $projectDir`, `EnvFileWriterInterface $envFileWriter`, `ConfigInterface $config`, `SampleIdProviderInterface $source`, `HealthCheckInterface $mysqlHealth`, `HealthCheckInterface $elasticSearchHealth`, `HealthCheckInterface $redisHealth`, `SeederInterface $seeder`.
 
 ### 5.3 `ProductWithTraceDTO` (`src/Application/DTO/ProductWithTraceDTO.php:19`)
 
@@ -202,6 +209,7 @@ Správa runtime konfigurace:
 - `bool $cacheHit`
 - `string $source`
 - `list<string> $executionLog`
+- `int $optimisticCount` — optimistický počet zobrazení pro async režim (`actualCount + 1` při async, jinak `actualCount`)
 
 ---
 
@@ -209,22 +217,30 @@ Správa runtime konfigurace:
 
 ### 6.1 Adaptéry pro ProductSource
 
-#### `ElasticSearchProductAdapter` (`src/Infrastructure/Adapter/ElasticSearchProductAdapter.php:17`)
+#### `ElasticSearchProductAdapter` (`src/Infrastructure/Adapter/ElasticSearchProductAdapter.php:18`)
 - Implementuje `ProductSourceInterface`.
 - Deleguje na `IElasticSearchDriver::findById()` a `search()`.
-- Index – konstanta `INDEX_NAME = 'products'`.
+- Název indexu – injektován přes konstruktor (`string $esIndexName`), konfigurovatelný přes env `ES_INDEX_NAME`.
+- `findById` používá `ProductDTOFactory::fromArray()` pro vytvoření `ProductDTO`.
 - `findSampleIds` používá `match_all` s `_source: false`.
 
-#### `MySqlProductAdapter` (`src/Infrastructure/Adapter/MySqlProductAdapter.php:17`)
+#### `MySqlProductAdapter` (`src/Infrastructure/Adapter/MySqlProductAdapter.php:18`)
 - Implementuje `ProductSourceInterface`.
 - Deleguje na `IMysqlDriver::findProduct()` a `findAllIds()`.
+- `findById` používá `ProductDTOFactory::fromArray()` pro vytvoření `ProductDTO`.
+
+#### `EnvFileWriterAdapter` (`src/Infrastructure/Adapter/EnvFileWriterAdapter.php:13`)
+- Implementuje `EnvFileWriterInterface`.
+- Injektuje `Symfony\Component\Filesystem\Filesystem`.
+- `readFile`: vrací obsah souboru přes `$filesystem->readFile()` nebo prázdný řetězec při neexistenci.
+- `writeFile`: zapisuje přes `$filesystem->dumpFile()`.
 
 ### 6.2 Drivery
 
-#### `SimpleElasticSearchDriver` (`src/Infrastructure/Driver/SimpleElasticSearchDriver.php:16`)
+#### `SimpleElasticSearchDriver` (`src/Infrastructure/Driver/SimpleElasticSearchDriver.php:17`)
 - Implementuje `IElasticSearchDriver`.
-- Injektuje `Elastic\Elasticsearch\Client`.
-- `findById`: provede `$client->get(['index' => 'products', 'id' => $id])`.
+- Injektuje `Elastic\Elasticsearch\Client` a `string $esIndexName` (konfigurovatelný přes env `ES_INDEX_NAME`).
+- `findById`: provede `$client->get(['index' => $this->esIndexName, 'id' => $id])`.
 - Zpracovává `ClientResponseException` s kódem 404 → `ProductNotFoundException`; ostatní → `SourceUnavailableException`.
 - `search`: provede `$client->search($params)->asArray()`.
 
@@ -239,31 +255,35 @@ Správa runtime konfigurace:
 
 **Důležité:** Všechny souborové operace cache se provádějí **výhradně** přes `Symfony\Component\Cache\Adapter\FilesystemAdapter`. Raw PHP file I/O (`fopen`, `flock`, `ftruncate`, `file_get_contents` atd.) je **zakázáno**. `FilesystemAdapter` sám spravuje adresář `storage/cache/`.
 
-#### `FileCacheAdapter` (`src/Infrastructure/Cache/FileCacheAdapter.php:17`)
+#### `FileCacheAdapter` (`src/Infrastructure/Cache/FileCacheAdapter.php:18`)
 - Implementuje `CacheInterface`.
 - Používá `Symfony\Component\Cache\Adapter\FilesystemAdapter`.
 - Serializace / deserializace přes injektovaný `NormalizerInterface&DenormalizerInterface` (`symfony/serializer`).
+- Injektuje `LoggerInterface` pro logování chyb cache operací.
 - `set` volá `expiresAfter($ttl)`, kde `null` znamená trvalé uložení (permanent cache).
 
-#### `RedisCacheAdapter` (`src/Infrastructure/Cache/RedisCacheAdapter.php:17`)
+#### `RedisCacheAdapter` (`src/Infrastructure/Cache/RedisCacheAdapter.php:18`)
 - Identický s `FileCacheAdapter`, ale používá `RedisAdapter`.
+- Injektuje `LoggerInterface` pro logování chyb cache operací.
 
 #### `NullCacheAdapter` (`src/Infrastructure/Cache/NullCacheAdapter.php:15`)
-- No-op implementace: `get` vždy vrací `null`, `set` a `delete` jsou prázdné.
+- No-op implementace: `get` vždy vrací `null`, `set` je prázdné.
 
 ### 6.4 Counter adaptéry
 
-#### `FilesystemCounter` (`src/Infrastructure/Counter/FilesystemCounter.php:18`)
+#### `FilesystemCounter` (`src/Infrastructure/Counter/FilesystemCounter.php:19`)
 - Implementuje `CounterInterface` a `SyncCounterInterface`.
 - Používá `FilesystemAdapter` s namespace `counter`.
 - Prefix klíče: `counter_`.
+- Injektuje `LoggerInterface` pro logování chyb counter operací.
 - `increment`: načte aktuální hodnotu (`getItem` → `isHit` ? `(int) $item->get()` : `0`), zvýší o 1, uloží s `expiresAfter(null)` (permanent).
 - `getCount`: vrací `0` při cache miss.
 
-#### `RedisCounter` (`src/Infrastructure/Counter/RedisCounter.php:15`)
+#### `RedisCounter` (`src/Infrastructure/Counter/RedisCounter.php:16`)
 - Implementuje `CounterInterface` a `SyncCounterInterface`.
 - Používá nativní příkaz `\Redis::incr()` (atomický).
 - Prefix klíče: `counter:`.
+- Injektuje `LoggerInterface` pro logování chyb counter operací.
 
 #### `NullCounter` (`src/Infrastructure/Counter/NullCounter.php:16`)
 - No-op: `increment` je prázdný, `getCount` vrací `0`.
@@ -290,10 +310,11 @@ Správa runtime konfigurace:
 
 #### `ProductSourceFactory` (`src/Infrastructure/Factory/ProductSourceFactory.php:19`)
 - Vytváří `ElasticSearchProductAdapter` nebo `MySqlProductAdapter` na základě `ConfigInterface::getDataSource()` přes `match`.
+- Pro ES adaptér předává `$esIndexName` z `ConfigInterface::getEsIndexName()`.
 
 #### `CacheAdapterFactory` (`src/Infrastructure/Factory/CacheAdapterFactory.php:21`)
 - Vytváří `FileCacheAdapter`, `RedisCacheAdapter` nebo `NullCacheAdapter`.
-- Pro souborový a Redis cache vytváří odpovídající Symfony adaptér (`FilesystemAdapter`/`RedisAdapter`) a předává serializátor.
+- Pro souborový a Redis cache vytváří odpovídající Symfony adaptér (`FilesystemAdapter`/`RedisAdapter`) a předává serializátor a `LoggerInterface`.
 
 #### `CounterAdapterFactory` (`src/Infrastructure/Factory/CounterAdapterFactory.php:21`)
 - `create(string $mode): CounterInterface` – pro režim `async` obaluje sync-counter do `AsyncCounterDecorator`.
@@ -305,15 +326,21 @@ Správa runtime konfigurace:
 - Zapíná `ERRMODE_EXCEPTION`, `FETCH_ASSOC`, `EMULATE_PREPARES = false`.
 
 #### `RedisConnectionFactory` (`src/Infrastructure/Factory/RedisConnectionFactory.php:10`)
-- `final` třída se statickou metodou `create(string $dsn): \Redis`.
+- `final readonly` třída se statickou metodou `create(string $dsn): \Redis`.
 - Parsovává DSN a volá `connect($host, $port)`.
+- Podporuje výběr Redis databáze z cesty DSN (`redis://host:port/N`).
+
+#### `ProductDTOFactory` (`src/Infrastructure/Factory/ProductDTOFactory.php:15`)
+- `final readonly` třída se statickou metodou `fromArray(array $data): ProductDTO`.
+- Vytváří `ProductDTO` z raw dat vracených drivery (MySQL, ES).
+- Validuje přítomnost klíčů (`id`, `name`, `price`, `description`) a kontroluje skalární hodnoty.
+- Při chybějícím klíči vyhazuje `\InvalidArgumentException`.
 
 ### 6.7 Health Check adaptéry
 
 - **`MySqlHealthAdapter`** (`src/Infrastructure/Health/MySqlHealthAdapter.php:12`): provede `SELECT 1` přes PDO.
 - **`ElasticSearchHealthAdapter`** (`src/Infrastructure/Health/ElasticSearchHealthAdapter.php:13`): volá `$client->info()`.
-- **`RedisHealthAdapter`** (`src/Infrastructure/Health/RedisHealthAdapter.php:12`): volá `$redis->ping()`, kontroluje `true` nebo `'PONG'`.
-- **Důležitý detail:** konstruktor přijímá `?\Redis $redis = null` (nullable). Pokud Redis není nakonfigurován, `isHealthy()` vrátí `false` (graceful degradation), místo aby spadl s chybou.
+- **`RedisHealthAdapter`** (`src/Infrastructure/Health/RedisHealthAdapter.php:13`): volá `$redis->ping()`, kontroluje `true` nebo `'PONG'`. Injektuje `\Redis` a `LoggerInterface`. Při výjimce loguje warning a vrací `false` (graceful degradation přes try/catch).
 
 ### 6.8 Normalizátory
 
@@ -330,8 +357,8 @@ Správa runtime konfigurace:
 | Příkaz | Soubor | Popis |
 |--------|--------|-------|
 | `app:migrate` | `src/Infrastructure/Command/MigrateCommand.php:14` | Vytvoří tabulku `products` v MySQL (DDL) přes `PDO::exec()` |
-| `app:es:init` | `src/Infrastructure/Command/ElasticSearchInitCommand.php:16` | Vytvoří index `products` s mappingem v ES. Přepínač `--force` pro přeuložení indexu |
-| `app:seed` | `src/Infrastructure/Command/SeedCommand.php:18` | Generuje falešné produkty přes `ProductSeeder`, zapisuje do MySQL a ES přes `DataSeederService` s progress barem. Přepínač `--count` (výchozí `SEED_COUNT` z env) |
+| `app:es:init` | `src/Infrastructure/Command/ElasticSearchInitCommand.php:17` | Vytvoří index v ES (název z env `ES_INDEX_NAME`) s mappingem. Přepínač `--force` pro přeuložení indexu. Podporuje překlad přes `TranslatorInterface` |
+| `app:seed` | `src/Infrastructure/Command/SeedCommand.php:17` | Generuje falešné produkty přes `ProductSeeder`, zapisuje do MySQL a ES přes `DataSeederService` s progress barem. Přepínač `--count` (výchozí `SEED_COUNT` z env). Podporuje překlad přes `TranslatorInterface` |
 
 **Důležité:** V projektu **neexistuje** vlastní příkaz `app:worker:start`. Worker se spouští standardním příkazem Symfony Messenger: `php bin/console messenger:consume async -vv`, který je definován v `docker-compose.yml` pro službu `worker`.
 
@@ -344,20 +371,21 @@ Správa runtime konfigurace:
 #### `DataSeederService` (`src/Infrastructure/Service/DataSeederService.php:14`)
 - Zapisuje data dávkově (batch insert) do MySQL (`MYSQL_BATCH_SIZE = 100`) a ElasticSearch (`ES_BULK_BATCH_SIZE = 200`).
 - MySQL: víceřádkový `INSERT ... VALUES (...), (...)` uvnitř transakce.
-- ElasticSearch: bulk API.
+- ElasticSearch: bulk API s konfigurovatelným názvem indexu (`$esIndexName` z env `ES_INDEX_NAME`).
 - Podporuje callback `onChunk` pro progress bar.
 
 #### `SeederAdapter` (`src/Infrastructure/Seeder/SeederAdapter.php:13`)
 - Implementuje doménový port `SeederInterface`.
 - Bridge / Adapter: spojuje `ProductSeeder` (generování) a `DataSeederService` (perzistence).
 - `seed(int $count): void` volá `$productSeeder->generate($count)` a `$dataSeederService->seed($products)`.
+- `seedWithCallback(int $count, ?\Closure $onChunk): void` – rozšířená verze s progress callbackem.
 
 ### 6.11 Config Adapter
 
 #### `EnvConfig` (`src/Infrastructure/Config/EnvConfig.php:15`)
 - Implementuje `ConfigInterface`.
 - Čte z `Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface`.
-- `getDataSource()`, `getCacheDriver()`, `getCounterMode()` čtou parametry `app.active_*`.
+- `getDataSource()`, `getCacheDriver()`, `getCounterMode()`, `getEsIndexName()` čtou parametry `app.active_*` a `app.es_index_name`.
 
 ---
 
@@ -365,10 +393,11 @@ Správa runtime konfigurace:
 
 ### 7.1 Kontrolery
 
-#### `DashboardController` (`src/Presentation/Controller/DashboardController.php:15`)
+#### `DashboardController` (`src/Presentation/Controller/DashboardController.php:17`)
 - `GET /` (`dashboard`) – renderuje `dashboard/index.html.twig` se stavem zdraví, aktuální konfigurací, ukázkovými ID produktů a seznamem povolených toggle hodnot.
-- `POST /toggle` (`dashboard_toggle`) – validace CSRF (`isCsrfTokenValid('toggle', ...)`), kontrola povolených klíčů/hodnot podle bílé listiny (`ALLOWED_TOGGLES`), volání `DashboardManager::setToggle()`. Při AJAX vrací JSON s oznámením o nutnosti `cache:clear` a restartu workeru.
-- `POST /seed` (`dashboard_seed`) – validace CSRF, rozsah count [1, 1000], volání `DashboardManager::seed()`, flash-message, redirect.
+- `POST /toggle` (`dashboard_toggle`) – validace CSRF (`isCsrfTokenValid('toggle', ...)`), kontrola povolených klíčů/hodnot podle bílé listiny (`ALLOWED_TOGGLES`), volání `DashboardManager::setToggle()`. Při AJAX vrací JSON s oznámením o nutnosti `cache:clear` a restartu workeru. **Rate limiting:** `limiter.dashboard_toggle` (10 požadavků/minutu).
+- `POST /seed` (`dashboard_seed`) – validace CSRF, rozsah count [1, 1000], volání `DashboardManager::seed()`, flash-message, redirect. **Rate limiting:** `limiter.dashboard_seed` (5 požadavků/minutu).
+- Injektuje `DashboardManager`, `TranslatorInterface`, `RateLimiterFactory` (toggle + seed).
 
 **Bílá listina přepínačů (`ALLOWED_TOGGLES`):**
 - `ACTIVE_PRODUCT_SOURCE`: `elasticsearch`, `mysql`
@@ -377,8 +406,8 @@ Správa runtime konfigurace:
 
 #### `ProductController` (`src/Presentation/Controller/ProductController.php:16`)
 - `GET /product/{id}` (`product_detail`) – vytvoří `ProductId::fromString($id)`, volá `ProductService::getProductWithTrace()`, měří TTFB (`microtime(true)`).
-  - **Optimistický counter display:** Pokud `ACTIVE_COUNTER_MODE` === `'async'`, kontroler spočítá `$displayCount = $actualCount + 1` (`src/Presentation/Controller/ProductController.php:38`), protože async increment ještě není zpracován workerem, ale UI má ukázat uživateli aktuální (předběžnou) hodnotu.
-  - Pokud požadavek přichází přes Turbo Frame (`$request->headers->has('Turbo-Frame')`) – renderuje `product/_frame.html.twig` s `$displayCount`.
+  - **Optimistický counter display:** `ProductWithTraceDTO::optimisticCount` obsahuje předpočítanou hodnotu (`actualCount + 1` při async režimu, jinak `actualCount`), vypočítanou v `ProductService::getOptimisticCount()`. Kontroler předává `$result->optimisticCount` jako `initialCount` do Twig šablony.
+  - Pokud požadavek přichází přes Turbo Frame (`$request->headers->has('Turbo-Frame')`) – renderuje `product/_frame.html.twig` s `initialCount = $result->optimisticCount`.
   - Jinak – serializuje `ProductDTO` do JSON přes `SerializerInterface`.
 - `GET /product/{id}/counter` (`product_counter`) – vrací JSON `{"count": N}` se skutečnou hodnotou z `$this->productService->getCount($productId)` (bez optimistického inkrementu).
 
@@ -407,20 +436,26 @@ Správa runtime konfigurace:
 ### 8.1 `services.yaml` (`config/services.yaml`)
 
 Klíčové DI nastavení:
+- **Parametry:** `app.active_product_source`, `app.active_cache_driver`, `app.active_counter_mode`, `app.counter_base_mode`, `app.es_index_name`.
 - **Drivery:**
-  - `PDO` – továrna `PdoConnectionFactory::create(DATABASE_URL)` (`config/services.yaml:37`).
-  - `Elastic\Elasticsearch\Client` – `ClientBuilder::fromConfig(['hosts' => [ELASTICSEARCH_URL]])` (`config/services.yaml:44`).
-  - `Redis` – továrna `RedisConnectionFactory::create(REDIS_URL)` (`config/services.yaml:49`).
-- **Health checks:** aliasy pro MySQL, ES, Redis adaptéry (`config/services.yaml:57`).
+  - `PDO` – továrna `PdoConnectionFactory::create(DATABASE_URL)` (`config/services.yaml:39`).
+  - `Elastic\Elasticsearch\Client` – `ClientBuilder::fromConfig(['hosts' => [ELASTICSEARCH_URL]])` (`config/services.yaml:46`).
+  - `Redis` – továrna `RedisConnectionFactory::create(REDIS_URL)` (`config/services.yaml:51`).
+- **Health checks:** aliasy pro MySQL, ES, Redis adaptéry (`config/services.yaml:58`).
 - **Domain Porty:**
-  - `ConfigInterface` → `EnvConfig` (`config/services.yaml:93`).
-  - `IElasticSearchDriver` → `SimpleElasticSearchDriver` (`config/services.yaml:96`).
-  - `IMysqlDriver` → `SimpleMySqlDriver` (`config/services.yaml:101`).
-  - `ProductSourceInterface` → továrna `ProductSourceFactory::create()` (`config/services.yaml:104`).
-  - `CacheInterface` → továrna `CacheAdapterFactory::create(active_cache_driver)` (`config/services.yaml:107`).
-  - `CounterInterface` → továrna `CounterAdapterFactory::create(active_counter_mode)` (`config/services.yaml:112`).
-  - `SyncCounterInterface` → továrna `CounterAdapterFactory::createSync(active_counter_mode)` (`config/services.yaml:117`).
-  - `SeederInterface` → `SeederAdapter` (`config/services.yaml:122`).
+  - `ConfigInterface` → `EnvConfig` (`config/services.yaml:112`).
+  - `EnvFileWriterInterface` → `EnvFileWriterAdapter` (`config/services.yaml:79`).
+  - `SampleIdProviderInterface` → alias na `ProductSourceInterface` (`config/services.yaml:82`).
+  - `IElasticSearchDriver` → `SimpleElasticSearchDriver` s `$esIndexName` (`config/services.yaml:115`).
+  - `IMysqlDriver` → `SimpleMySqlDriver` (`config/services.yaml:121`).
+  - `ProductSourceInterface` → továrna `ProductSourceFactory::create()` (`config/services.yaml:124`).
+  - `CacheInterface` → továrna `CacheAdapterFactory::create(active_cache_driver)` (`config/services.yaml:127`).
+  - `CounterInterface` → továrna `CounterAdapterFactory::create(active_counter_mode)` (`config/services.yaml:132`).
+  - `SyncCounterInterface` → továrna `CounterAdapterFactory::createSync(active_counter_mode)` (`config/services.yaml:137`).
+  - `SeederInterface` → `SeederAdapter` (`config/services.yaml:142`).
+- **Application Services:**
+  - `ProductService` – argument `$cacheTtl` z `%env(int:CACHE_TTL)%` (`config/services.yaml:93`).
+  - `DashboardManager` – argumenty pro health checky a seeder (`config/services.yaml:84`).
 
 ### 8.2 Messenger (`config/packages/messenger.yaml`)
 
@@ -435,9 +470,12 @@ Výchozí hodnoty (`/home/gun/logio/.env`):
 ACTIVE_PRODUCT_SOURCE=elasticsearch
 ACTIVE_CACHE_DRIVER=file
 ACTIVE_COUNTER_MODE=async
-COUNTER_BASE_MODE=filesystem
+COUNTER_BASE_MODE=redis
 CACHE_TTL=3600
 SEED_COUNT=1000
+ES_INDEX_NAME=products
+CACHE_DIR=/var/www/storage/cache
+COUNTER_DIR=/var/www/storage/counter
 ```
 
 Runtime přepínání se provádí zápisem do `.env.local` přes `DashboardManager::setToggle()`.
@@ -550,8 +588,7 @@ Jediná povolená operace zápisu souboru: `Symfony\Component\Filesystem\Filesys
 
 ### 11.2 File Cache
 - `Symfony\Component\Cache\Adapter\FilesystemAdapter` s namespace `cache`.
-- TTL se řídí přes `CacheItemInterface::expiresAfter()`. `expiresAfter(null)` znamená permanent / infinite cache.
-- Adaptér sám spravuje adresář `storage/cache/`.
+- TTL se řídí přes `CacheItemInterface::expiresAfter()`. Hodnota TTL pochází z env `CACHE_TTL` (výchozí `3600` s). `expiresAfter(null)` znamená permanent / infinite cache.
 
 ### 11.3 File Counter
 - `Symfony\Component\Cache\Adapter\FilesystemAdapter` s namespace `counter`.
@@ -585,9 +622,9 @@ Když `ACTIVE_COUNTER_MODE=async`:
 |--------|---------|---------------|
 | Unit | `tests/Unit/` | **8** |
 | Integration | `tests/Integration/` | 14 |
-| Concurrent | `tests/Concurrent/` | 2 |
+| Concurrent | `tests/Concurrent/` | 3 |
 | Functional | `tests/Functional/` | 2 |
-| **Celkem** | | **26** |
+| **Celkem** | | **27** |
 
 **Unit testy (8 souborů):**
 - `tests/Unit/Application/Service/DashboardManagerTest.php`
@@ -636,7 +673,7 @@ Když `ACTIVE_COUNTER_MODE=async`:
 
 ### 13.1 PHPStan (`phpstan.neon`)
 
-- Úroveň: **6**.
+- Úroveň: **9**.
 - Připojeny `phpstan-strict-rules`.
 - Cesty: `src`, `tests`.
 - Výjimka: `src/Kernel.php`.
@@ -684,24 +721,23 @@ Implementována přes Symfony Translation Component s ICU Message Format.
 5. `ProductService`:
    - `counter->increment($id)` (async dekorátor → dispatch do Redis fronty).
    - `cache->get('product_' . $id->value())`.
-   - Cache hit → vrací `ProductWithTraceDTO`.
-   - Cache miss → `source->findById($id)` (MySQL nebo ES) → `cache->set(...)`.
+   - Cache hit → vrací `ProductWithTraceDTO` s `optimisticCount`.
+   - Cache miss → `source->findById($id)` (MySQL nebo ES) → `cache->set(...)` s TTL z `CACHE_TTL`.
 6. Kontroler serializuje `ProductDTO` do JSON přes `SerializerInterface`.
 7. `ExceptionSubscriber` zachytává domain výjimky a vrací JSON s správným HTTP statusem.
 
 ### 15.2 Vyhledání produktu (Turbo Frame)
 
 1. Stejná kontrolerská metoda, ale požadavek obsahuje hlavičku `Turbo-Frame`.
-2. Kontroler určí `$isAsync = $config->getCounterMode() === 'async'`.
-3. Pro async režim vypočítá optimistický count: `$displayCount = $actualCount + 1`.
-4. Renderuje `product/_frame.html.twig` s `initialCount = $displayCount`.
-5. `<turbo-frame id="search-result">` se aktualizuje na stránce bez plného přenačtení.
+2. `ProductService::getProductWithTrace()` vrací `ProductWithTraceDTO` s `optimisticCount` (předpočítaný v `ProductService::getOptimisticCount()`).
+3. Kontroler předává `$result->optimisticCount` jako `initialCount` do Twig šablony.
+4. `<turbo-frame id="search-result">` se aktualizuje na stránce bez plného přenačtení.
 
 ### 15.3 Přepnutí konfigurace
 
 1. Dashboard odesílá POST na `/toggle` s CSRF tokenem.
 2. `DashboardController` validuje klíč a hodnotu podle bílé listiny (`ALLOWED_TOGGLES`).
-3. `DashboardManager::setToggle()` aktualizuje `.env.local`.
+3. `DashboardManager::setToggle()` aktualizuje `.env.local` přes `EnvFileWriterInterface`.
 4. Uživateli se zobrazí notice o nutnosti `cache:clear` a restartu workeru (protože env proměnné se čtou při startu kontejneru / Symfony kernelu, runtime přepnutí přes `.env.local` vyžaduje přečtení).
 
 ---
@@ -711,8 +747,8 @@ Implementována přes Symfony Translation Component s ICU Message Format.
 V projektu se používá **výhradně konstruktorové vkládání závislostí** (constructor injection). Přímé vytváření objektů přes `new` v byznys logice je zakázáno; továrny se používají pouze v DI konfiguraci (`services.yaml`).
 
 Klíčové vazby:
-- `ProductService` závisí na `ProductSourceInterface`, `CacheInterface`, `CounterInterface`, `ConfigInterface`.
-- `DashboardManager` závisí na `ConfigInterface`, `ProductSourceInterface`, `HealthCheckInterface` (×3), `SeederInterface`, `Filesystem`, `$projectDir`.
+- `ProductService` závisí na `ProductSourceInterface`, `CacheInterface`, `CounterInterface`, `ConfigInterface`, `int $cacheTtl`.
+- `DashboardManager` závisí na `EnvFileWriterInterface`, `ConfigInterface`, `SampleIdProviderInterface`, `HealthCheckInterface` (×3), `SeederInterface`, `$projectDir`.
 - `ProductSourceFactory` závisí na `ConfigInterface`, `IElasticSearchDriver`, `IMysqlDriver`.
 - `CounterAdapterFactory` závisí na `MessageBusInterface`, `\Redis`, `$counterDir`, `LoggerInterface`, `$counterBaseMode`.
 - `AsyncCounterDecorator` závisí na `CounterInterface $fallbackCounter` (sync), `MessageBusInterface`, `LoggerInterface`.
@@ -724,10 +760,10 @@ Klíčové vazby:
 1. **Striktnost vrstev je dodržena:** Domain nezná Symfony, PDO, ES klienta, HTTP. Application nepoužívá `Request` ani `$_GET`. Presentation neobsahuje SQL a byznys logiku.
 2. **Porty a adaptéry:** Každý vnější aspekt (MySQL, ES, Redis, souborový systém) je skryt za rozhraním v Domain. Přepínání implementací probíhá přes env proměnné a továrny bez změny Application/Domain.
 3. **Serializace:** Používá se `symfony/serializer` s vlastními `PriceNormalizer` a `ProductIdNormalizer`. Ruční `toArray()` a `json_encode` chybějí v Application/Domain.
-4. **Bezpečnost:** Všechny SQL dotazy používají prepared statements. CSRF tokeny na formulářích dashboardu. Validace toggle hodnot podle bílé listiny.
-5. **Testovací pyramida:** Plné pokrytí Unit (8) → Integration (14) → Concurrent (2) → Functional (2). Bootstrap čistí storage před spuštěním.
-6. **Kvalita kódu:** PHPStan level 6 + strict rules, php-cs-fixer s PSR-12/Symfony, `declare(strict_types=1)` ve všech souborech, absence `empty()`, `isset()`, `is_null()`, `==`.
+4. **Bezpečnost:** Všechny SQL dotazy používají prepared statements. CSRF tokeny na formulářích dashboardu. Validace toggle hodnot podle bílé listiny. Rate limiting na toggle (10/min) a seed (5/min) endpointech.
+5. **Testovací pyramida:** Plné pokrytí Unit (8) → Integration (14) → Concurrent (3) → Functional (2). Bootstrap čistí storage před spuštěním.
+6. **Kvalita kódu:** PHPStan level 9 + strict rules, php-cs-fixer s PSR-12/Symfony, `declare(strict_types=1)` ve všech souborech, absence `empty()`, `isset()`, `is_null()`, `==`.
 7. **Frontend bez Node.js:** AssetMapper + Tailwind CSS binary + Alpine.js + Turbo poskytují moderní UX bez npm/webpack.
 8. **Fantomové komponenty, chybějící v kódu:** `QueueInterface` (Domain port), `app:worker:start` (CLI příkaz), `tailwind.config.js` (konfigurační soubor). Tato dokumentace tyto entity neobsahuje.
-9. **Optimistický counter display:** Důležitý UI detail – při async režimu `ProductController` zobrazuje `$actualCount + 1`, protože async increment ještě není zpracován workerem, ale uživatel očekává vidět aktuální hodnotu.
-10. **Graceful degradation:** `RedisHealthAdapter` má nullable `\Redis` v konstruktoru, což umožňuje health-check pracovat i při nedostupném Redis připojení.
+9. **Optimistický counter display:** Důležitý UI detail – při async režimu `ProductService::getOptimisticCount()` vrací `$actualCount + 1`, protože async increment ještě není zpracován workerem, ale uživatel očekává vidět aktuální hodnotu. Hodnota je předána přes `ProductWithTraceDTO::optimisticCount` do kontroleru a Twig šablony.
+10. **Graceful degradation:** `RedisHealthAdapter` používá try/catch s `LoggerInterface` – při výjimce loguje warning a vrací `false`, což umožňuje health-check pracovat i při nedostupném Redis připojení.
