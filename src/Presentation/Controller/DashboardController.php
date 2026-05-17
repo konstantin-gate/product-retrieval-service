@@ -18,12 +18,6 @@ final class DashboardController extends AbstractController
 {
     private const SAMPLE_PRODUCT_COUNT = 5;
 
-    private const ALLOWED_TOGGLES = [
-        'ACTIVE_PRODUCT_SOURCE' => ['elasticsearch', 'mysql'],
-        'ACTIVE_CACHE_DRIVER' => ['file', 'redis', 'null'],
-        'ACTIVE_COUNTER_MODE' => ['async', 'filesystem', 'redis', 'null'],
-    ];
-
     private const SEED_MIN_COUNT = 1;
     private const SEED_MAX_COUNT = 1000;
     private const SEED_DEFAULT_COUNT = 1000;
@@ -41,11 +35,23 @@ final class DashboardController extends AbstractController
     #[Route('/', name: 'dashboard', methods: ['GET'])]
     public function index(): Response
     {
+        $healthStatus = $this->manager->getHealthStatus();
+        $redisHealthy = $healthStatus['redis'];
+
+        $fallbackApplied = $this->manager->ensureConfigurationValidity($redisHealthy);
+
+        if ($fallbackApplied) {
+            $this->addFlash('warning', $this->translator->trans('flash.redis_fallback_notice'));
+
+            return $this->redirectToRoute('dashboard');
+        }
+
         return $this->render('dashboard/index.html.twig', [
-            'healthStatus' => $this->manager->getHealthStatus(),
+            'healthStatus' => $healthStatus,
             'currentConfig' => $this->manager->getCurrentConfig(),
             'productIds' => $this->manager->getSampleProductIds(self::SAMPLE_PRODUCT_COUNT),
-            'allowedToggles' => self::ALLOWED_TOGGLES,
+            'allToggleOptions' => $this->manager->getAllToggleOptions(),
+            'availableToggles' => $this->manager->getAvailableToggles($redisHealthy),
         ]);
     }
 
@@ -64,11 +70,13 @@ final class DashboardController extends AbstractController
         $key = (string) $request->request->get('key');
         $value = (string) $request->request->get('value');
 
-        if (!\array_key_exists($key, self::ALLOWED_TOGGLES)) {
+        $allowedToggles = $this->manager->getAvailableToggles();
+
+        if (!\array_key_exists($key, $allowedToggles)) {
             return new JsonResponse(['error' => $this->translator->trans('error.unknown_toggle_key')], 400);
         }
 
-        if (!\in_array($value, self::ALLOWED_TOGGLES[$key], true)) {
+        if (!\in_array($value, $allowedToggles[$key], true)) {
             return new JsonResponse(['error' => $this->translator->trans('error.invalid_toggle_value')], 400);
         }
 

@@ -52,6 +52,7 @@ services:
         factory: ['App\Infrastructure\Factory\RedisConnectionFactory', 'create']
         arguments:
             $dsn: '%env(resolve:REDIS_URL)%'
+        lazy: true
 
     # --- Health Check Adapters ---
 

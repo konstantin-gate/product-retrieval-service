@@ -38,6 +38,8 @@ toggle:
         'null': 'Disabled'
         async: 'Async'
         filesystem: 'Filesystem'
+    unavailable:
+        redis: 'Redis is unavailable'
 
 product:
     views: 'views'
@@ -58,6 +60,7 @@ flash:
     count_range_error: 'Count must be between 1 and 1000.'
     seed_success: 'Successfully generated {count, plural, one {# product} other {# products}}.'
     toggle_notice: 'Run cache:clear and restart worker to apply changes.'
+    redis_fallback_notice: 'Redis is unavailable. Cache and counter modes have been automatically switched to filesystem fallback.'
 
 error:
     invalid_csrf: 'Invalid CSRF token'

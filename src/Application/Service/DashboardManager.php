@@ -15,6 +15,17 @@ use App\Domain\Contract\SeederInterface;
  */
 final readonly class DashboardManager
 {
+    private const ALL_ALLOWED_TOGGLES = [
+        'ACTIVE_PRODUCT_SOURCE' => ['elasticsearch', 'mysql'],
+        'ACTIVE_CACHE_DRIVER' => ['file', 'redis', 'null'],
+        'ACTIVE_COUNTER_MODE' => ['async', 'filesystem', 'redis', 'null'],
+    ];
+
+    private const REDIS_DEPENDENT_OPTIONS = [
+        'ACTIVE_CACHE_DRIVER' => ['redis'],
+        'ACTIVE_COUNTER_MODE' => ['redis', 'async'],
+    ];
+
     /**
      * @param string                    $projectDir          Root directory of the project
      * @param EnvFileWriterInterface    $envFileWriter       Environment file writer port
@@ -127,5 +138,69 @@ final readonly class DashboardManager
     public function seed(int $count): void
     {
         $this->seeder->seed($count);
+    }
+
+    /**
+     * Returns the full list of all possible toggle options, regardless of service health.
+     *
+     * @return array<string, list<string>>
+     */
+    public function getAllToggleOptions(): array
+    {
+        return self::ALL_ALLOWED_TOGGLES;
+    }
+
+    /**
+     * Returns available toggle options, excluding Redis-dependent ones when Redis is unavailable.
+     *
+     * @param bool|null $redisHealthy Pre-computed Redis health status to avoid redundant pings
+     *
+     * @return array<string, list<string>>
+     */
+    public function getAvailableToggles(?bool $redisHealthy = null): array
+    {
+        $toggles = self::ALL_ALLOWED_TOGGLES;
+        $redisHealthy ??= $this->redisHealth->isHealthy();
+
+        if ($redisHealthy === false) {
+            foreach (self::REDIS_DEPENDENT_OPTIONS as $key => $options) {
+                $toggles[$key] = \array_values(\array_diff($toggles[$key], $options));
+            }
+        }
+
+        return $toggles;
+    }
+
+    /**
+     * Ensures current configuration does not use unavailable services.
+     *
+     * If Redis is unavailable and current config uses Redis-dependent options,
+     * auto-switches to safe fallback values and persists them to .env.local.
+     *
+     * @param bool|null $redisHealthy Pre-computed Redis health status to avoid redundant pings
+     *
+     * @return bool True if configuration was changed, false otherwise
+     */
+    public function ensureConfigurationValidity(?bool $redisHealthy = null): bool
+    {
+        $redisHealthy ??= $this->redisHealth->isHealthy();
+        if ($redisHealthy === true) {
+            return false;
+        }
+
+        $config = $this->getCurrentConfig();
+        $changed = false;
+
+        if ('redis' === $config['cache']) {
+            $this->setToggle('ACTIVE_CACHE_DRIVER', 'file');
+            $changed = true;
+        }
+
+        if ('redis' === $config['counter'] || 'async' === $config['counter']) {
+            $this->setToggle('ACTIVE_COUNTER_MODE', 'filesystem');
+            $changed = true;
+        }
+
+        return $changed;
     }
 }

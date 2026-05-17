@@ -8,7 +8,11 @@
 
     {% for label, messages in app.flashes %}
         {% for message in messages %}
-            <div data-testid="flash-message" class="mb-4 p-3 rounded-md text-sm {{ label == 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200' }}" role="alert">
+            <div data-testid="flash-message" class="mb-4 p-3 rounded-md text-sm {{
+                label == 'success' ? 'bg-green-50 text-green-700 border border-green-200' :
+                (label == 'warning' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
+                'bg-red-50 text-red-700 border border-red-200')
+            }}" role="alert">
                 {{ message }}
             </div>
         {% endfor %}
@@ -81,22 +85,33 @@
         <div data-testid="configuration">
             <h3 class="text-sm font-medium text-gray-600 mb-2">{{ 'dashboard.configuration'|trans }}</h3>
             <div class="space-y-3">
-                {% for key, options in allowedToggles %}
+                {% for key, options in allToggleOptions %}
                     {% set configKey = key == 'ACTIVE_PRODUCT_SOURCE' ? 'source' : (key == 'ACTIVE_CACHE_DRIVER' ? 'cache' : 'counter') %}
                     <div class="flex items-center gap-3">
                         <span class="text-sm font-mono text-gray-500 w-52">{{ ('toggle.label.' ~ key|lower)|trans }}</span>
                         <div class="flex gap-1" role="group" aria-label="{{ key }} toggle">
                             {% for option in options %}
-                                <form method="post" action="{{ path('dashboard_toggle') }}" class="inline">
-                                    <input type="hidden" name="_token" value="{{ csrf_token('toggle') }}">
-                                    <input type="hidden" name="key" value="{{ key }}">
-                                    <input type="hidden" name="value" value="{{ option }}">
-                                    <button data-testid="toggle-{{ key|lower }}-{{ option|lower }}" type="submit"
-                                        class="px-3 py-1 rounded-full text-xs font-medium transition-colors
-                                               {{ currentConfig[configKey] == option ? 'bg-emerald-700 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
+                                {% set isActive = currentConfig[configKey] == option %}
+                                {% set isAvailable = option in availableToggles[key] %}
+                                {% if isAvailable %}
+                                    <form method="post" action="{{ path('dashboard_toggle') }}" class="inline">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('toggle') }}">
+                                        <input type="hidden" name="key" value="{{ key }}">
+                                        <input type="hidden" name="value" value="{{ option }}">
+                                        <button data-testid="toggle-{{ key|lower }}-{{ option|lower }}" type="submit"
+                                            class="px-3 py-1 rounded-full text-xs font-medium transition-colors
+                                                   {{ isActive ? 'bg-emerald-700 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
+                                            {{ ('toggle.value.' ~ option|lower)|trans }}
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <button data-testid="toggle-{{ key|lower }}-{{ option|lower }}" type="button" disabled
+                                        title="{{ 'toggle.unavailable.redis'|trans }}"
+                                        class="px-3 py-1 rounded-full text-xs font-medium transition-colors opacity-50 cursor-not-allowed
+                                               {{ isActive ? 'bg-emerald-700 text-white' : 'bg-gray-100 text-gray-400' }}">
                                         {{ ('toggle.value.' ~ option|lower)|trans }}
                                     </button>
-                                </form>
+                                {% endif %}
                             {% endfor %}
                         </div>
                     </div>

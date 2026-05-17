@@ -45,7 +45,7 @@ final readonly class RedisCacheAdapter implements CacheInterface
             }
 
             return $this->serializer->denormalize($item->get(), ProductDTO::class);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $this->logger->error('Cache read failed', [
                 'key' => $key,
                 'driver' => 'redis',
@@ -71,7 +71,7 @@ final readonly class RedisCacheAdapter implements CacheInterface
             $item->set($this->serializer->normalize($value, 'json'));
             $item->expiresAfter($ttl);
             $this->cache->save($item);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $this->logger->error('Cache write failed', [
                 'key' => $key,
                 'driver' => 'redis',

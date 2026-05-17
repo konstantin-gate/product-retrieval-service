@@ -38,6 +38,8 @@ toggle:
         'null': 'Vypnuto'
         async: 'Asynchronní'
         filesystem: 'Souborový systém'
+    unavailable:
+        redis: 'Redis není dostupný'
 
 product:
     views: 'zobrazení'
@@ -58,6 +60,7 @@ flash:
     count_range_error: 'Počet musí být mezi 1 a 1000.'
     seed_success: 'Úspěšně vygenerováno {count, plural, one {# produkt} few {# produkty} other {# produktů}}.'
     toggle_notice: 'Spusťte cache:clear a restartujte worker pro aplikaci změn.'
+    redis_fallback_notice: 'Redis není dostupný. Režimy cache a počítadla byly automaticky přepnuty na souborový fallback.'
 
 error:
     invalid_csrf: 'Neplatný CSRF token'

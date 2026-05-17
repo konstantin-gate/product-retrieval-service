@@ -19,13 +19,17 @@ final readonly class RedisConnectionFactory
     public static function create(string $dsn): \Redis
     {
         $parsed = \parse_url($dsn);
+        if (false === $parsed) {
+            throw new \InvalidArgumentException(\sprintf('Invalid Redis DSN: %s', $dsn));
+        }
+
         $host = $parsed['host'] ?? 'localhost';
         $port = $parsed['port'] ?? 6379;
 
         $redis = new \Redis();
         $redis->connect($host, $port);
 
-        $db = isset($parsed['path']) ? (int) ltrim($parsed['path'], '/') : 0;
+        $db = \array_key_exists('path', $parsed) ? (int) ltrim($parsed['path'], '/') : 0;
         if ($db > 0) {
             $redis->select($db);
         }

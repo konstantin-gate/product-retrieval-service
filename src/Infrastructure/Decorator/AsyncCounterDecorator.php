@@ -8,7 +8,6 @@ use App\Domain\Contract\CounterInterface;
 use App\Domain\ValueObject\ProductId;
 use App\Infrastructure\Message\CounterIncrementMessage;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Messenger\Exception\ExceptionInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 
 /**
@@ -37,7 +36,7 @@ final readonly class AsyncCounterDecorator implements CounterInterface
     {
         try {
             $this->messageBus->dispatch(new CounterIncrementMessage($id->value()));
-        } catch (ExceptionInterface $e) {
+        } catch (\Throwable $e) {
             $this->logger->warning('Async counter dispatch failed, falling back to sync increment', [
                 'productId' => $id->value(),
                 'exception' => $e,

@@ -44,7 +44,7 @@ final readonly class FilesystemCounter implements CounterInterface, SyncCounterI
             $item->set($current + 1);
             $item->expiresAfter(null);
             $this->cache->save($item);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $this->logger->error('Counter increment failed', [
                 'productId' => $id->value(),
                 'driver' => 'filesystem',
@@ -68,7 +68,7 @@ final readonly class FilesystemCounter implements CounterInterface, SyncCounterI
             $val = $item->get();
 
             return ($item->isHit() && \is_numeric($val)) ? (int) $val : 0;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $this->logger->error('Counter read failed', [
                 'productId' => $id->value(),
                 'driver' => 'filesystem',
