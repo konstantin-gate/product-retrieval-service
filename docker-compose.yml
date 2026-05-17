@@ -54,6 +54,7 @@ services:
       redis:
         condition: service_healthy
     command: php bin/console messenger:consume async -vv
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "php", "-v"]
       interval: 30s
