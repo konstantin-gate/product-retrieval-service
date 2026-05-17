@@ -25,7 +25,11 @@ final class RedisCounterConcurrentTest extends KernelTestCase
             self::markTestSkipped('pcntl extension not available');
         }
 
-        $this->redis = static::getContainer()->get(\Redis::class);
+        $redis = static::getContainer()->get(\Redis::class);
+        if (!$redis instanceof \Redis) {
+            throw new \RuntimeException('Redis service not found');
+        }
+        $this->redis = $redis;
         $this->redis->del(self::TEST_KEY);
     }
 

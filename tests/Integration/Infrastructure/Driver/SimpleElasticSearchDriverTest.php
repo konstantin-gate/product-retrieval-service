@@ -26,8 +26,17 @@ final class SimpleElasticSearchDriverTest extends KernelTestCase
     {
         $container = static::getContainer();
 
-        $this->esClient = $container->get(Client::class);
-        $this->esIndexName = $container->get(ConfigInterface::class)->getEsIndexName();
+        $client = $container->get(Client::class);
+        if (!$client instanceof Client) {
+            throw new \RuntimeException('ElasticSearch client not found');
+        }
+        $this->esClient = $client;
+
+        $config = $container->get(ConfigInterface::class);
+        if (!$config instanceof ConfigInterface) {
+            throw new \RuntimeException('Config service not found');
+        }
+        $this->esIndexName = $config->getEsIndexName();
 
         $this->esClient->index([
             'index' => $this->esIndexName,

@@ -47,6 +47,11 @@ final class SeedCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $count = (int) $input->getOption('count');
+        if ($count < 1) {
+            $output->writeln('<error>'.$this->trans('cli.seed.error_invalid_count').'</error>');
+
+            return Command::FAILURE;
+        }
 
         $progressBar = new ProgressBar($output, $count * self::SEED_STAGES);
         $progressBar->start();

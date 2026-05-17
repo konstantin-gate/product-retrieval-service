@@ -63,13 +63,16 @@ final readonly class DashboardManager
                 continue;
             }
             if (\str_starts_with($trimmed, $key.'=')) {
-                $oldValue = \substr($line, \strpos($line, '=') + 1);
-                if (\str_starts_with($oldValue, '"') && \str_ends_with($oldValue, '"')) {
-                    $lines[$index] = $key.'="'.$value.'"';
-                } else {
-                    $lines[$index] = $key.'='.$value;
+                $pos = \strpos($line, '=');
+                if (false !== $pos) {
+                    $oldValue = \substr($line, $pos + 1);
+                    if (\str_starts_with($oldValue, '"') && \str_ends_with($oldValue, '"')) {
+                        $lines[$index] = $key.'="'.$value.'"';
+                    } else {
+                        $lines[$index] = $key.'='.$value;
+                    }
+                    $keyFound = true;
                 }
-                $keyFound = true;
 
                 break;
             }

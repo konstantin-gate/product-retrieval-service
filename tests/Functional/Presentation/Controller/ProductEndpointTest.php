@@ -14,10 +14,22 @@ final class ProductEndpointTest extends WebTestCase
     {
         $client = static::createClient();
         $container = static::getContainer();
-        $esIndexName = $container->get(ConfigInterface::class)->getEsIndexName();
+
+        $config = $container->get(ConfigInterface::class);
+        if (!$config instanceof ConfigInterface) {
+            throw new \RuntimeException('ConfigInterface not found');
+        }
+        $esIndexName = $config->getEsIndexName();
 
         $pdo = $container->get(\PDO::class);
+        if (!$pdo instanceof \PDO) {
+            throw new \RuntimeException('PDO not found');
+        }
+
         $esClient = $container->get(Client::class);
+        if (!$esClient instanceof Client) {
+            throw new \RuntimeException('ElasticSearch client not found');
+        }
 
         $id = '550e8400-e29b-41d4-a716-446655441111';
         $stmt = $pdo->prepare('REPLACE INTO products (id, name, price, description) VALUES (:id, :name, :price, :description)');
@@ -37,7 +49,7 @@ final class ProductEndpointTest extends WebTestCase
                 'price' => 1999,
                 'description' => 'Test Description',
             ],
-            'refresh' => true,
+            'refresh' => 'true',
         ]);
 
         $client->request('GET', '/product/'.$id);
@@ -45,7 +57,12 @@ final class ProductEndpointTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertResponseHeaderSame('Content-Type', 'application/json');
 
-        $data = json_decode($client->getResponse()->getContent(), true);
+        $content = $client->getResponse()->getContent();
+        if (false === $content) {
+            throw new \RuntimeException('Response content is false');
+        }
+        /** @var array<string, mixed> $data */
+        $data = json_decode($content, true);
         self::assertSame($id, $data['id']);
         self::assertSame('Test Product', $data['name']);
         self::assertSame(1999, $data['price']);
@@ -58,7 +75,12 @@ final class ProductEndpointTest extends WebTestCase
         $client->request('GET', '/product/'.$id, [], [], ['HTTP_ACCEPT' => 'application/json']);
 
         self::assertResponseStatusCodeSame(404);
-        $data = json_decode($client->getResponse()->getContent(), true);
+        $content = $client->getResponse()->getContent();
+        if (false === $content) {
+            throw new \RuntimeException('Response content is false');
+        }
+        /** @var array<string, mixed> $data */
+        $data = json_decode($content, true);
         self::assertSame('Product not found', $data['error']);
     }
 
@@ -68,7 +90,12 @@ final class ProductEndpointTest extends WebTestCase
         $client->request('GET', '/product/invalid-uuid', [], [], ['HTTP_ACCEPT' => 'application/json']);
 
         self::assertResponseStatusCodeSame(400);
-        $data = json_decode($client->getResponse()->getContent(), true);
+        $content = $client->getResponse()->getContent();
+        if (false === $content) {
+            throw new \RuntimeException('Response content is false');
+        }
+        /** @var array<string, mixed> $data */
+        $data = json_decode($content, true);
         self::assertSame('Invalid product ID', $data['error']);
     }
 
@@ -76,14 +103,29 @@ final class ProductEndpointTest extends WebTestCase
     {
         $client = static::createClient();
         $container = static::getContainer();
-        $esIndexName = $container->get(ConfigInterface::class)->getEsIndexName();
+
+        $config = $container->get(ConfigInterface::class);
+        if (!$config instanceof ConfigInterface) {
+            throw new \RuntimeException('ConfigInterface not found');
+        }
+        $esIndexName = $config->getEsIndexName();
 
         $pdo = $container->get(\PDO::class);
+        if (!$pdo instanceof \PDO) {
+            throw new \RuntimeException('PDO not found');
+        }
+
         $esClient = $container->get(Client::class);
+        if (!$esClient instanceof Client) {
+            throw new \RuntimeException('ElasticSearch client not found');
+        }
 
         $id = '550e8400-e29b-41d4-a716-446655442222';
 
         $redis = $container->get(\Redis::class);
+        if (!$redis instanceof \Redis) {
+            throw new \RuntimeException('Redis not found');
+        }
         $redis->del('counter:'.$id);
 
         $stmt = $pdo->prepare('REPLACE INTO products (id, name, price, description) VALUES (:id, :name, :price, :description)');
@@ -103,13 +145,18 @@ final class ProductEndpointTest extends WebTestCase
                 'price' => 999,
                 'description' => 'Counter Description',
             ],
-            'refresh' => true,
+            'refresh' => 'true',
         ]);
 
         // Counter starts at 0 after cleanup
         $client->request('GET', '/product/'.$id.'/counter');
         self::assertResponseIsSuccessful();
-        $data1 = json_decode($client->getResponse()->getContent(), true);
+        $content1 = $client->getResponse()->getContent();
+        if (false === $content1) {
+            throw new \RuntimeException('Response content is false');
+        }
+        /** @var array<string, mixed> $data1 */
+        $data1 = json_decode($content1, true);
         self::assertSame(0, $data1['count']);
 
         // Make product requests to increment counter (sync mode — immediate)
@@ -122,7 +169,12 @@ final class ProductEndpointTest extends WebTestCase
         // Counter endpoint should reflect exactly 2 increments
         $client->request('GET', '/product/'.$id.'/counter');
         self::assertResponseIsSuccessful();
-        $data2 = json_decode($client->getResponse()->getContent(), true);
+        $content2 = $client->getResponse()->getContent();
+        if (false === $content2) {
+            throw new \RuntimeException('Response content is false');
+        }
+        /** @var array<string, mixed> $data2 */
+        $data2 = json_decode($content2, true);
         self::assertSame(2, $data2['count']);
     }
 
@@ -130,10 +182,22 @@ final class ProductEndpointTest extends WebTestCase
     {
         $client = static::createClient();
         $container = static::getContainer();
-        $esIndexName = $container->get(ConfigInterface::class)->getEsIndexName();
+
+        $config = $container->get(ConfigInterface::class);
+        if (!$config instanceof ConfigInterface) {
+            throw new \RuntimeException('ConfigInterface not found');
+        }
+        $esIndexName = $config->getEsIndexName();
 
         $pdo = $container->get(\PDO::class);
+        if (!$pdo instanceof \PDO) {
+            throw new \RuntimeException('PDO not found');
+        }
+
         $esClient = $container->get(Client::class);
+        if (!$esClient instanceof Client) {
+            throw new \RuntimeException('ElasticSearch client not found');
+        }
 
         $id = '550e8400-e29b-41d4-a716-446655443333';
         $stmt = $pdo->prepare('REPLACE INTO products (id, name, price, description) VALUES (:id, :name, :price, :description)');
@@ -153,13 +217,18 @@ final class ProductEndpointTest extends WebTestCase
                 'price' => 2999,
                 'description' => 'Serialization Description',
             ],
-            'refresh' => true,
+            'refresh' => 'true',
         ]);
 
         $client->request('GET', '/product/'.$id);
 
         self::assertResponseIsSuccessful();
-        $data = json_decode($client->getResponse()->getContent(), true);
+        $content = $client->getResponse()->getContent();
+        if (false === $content) {
+            throw new \RuntimeException('Response content is false');
+        }
+        /** @var array<string, mixed> $data */
+        $data = json_decode($content, true);
 
         self::assertIsString($data['id']);
         self::assertIsInt($data['price']);

@@ -20,12 +20,22 @@ final readonly class EnvConfig implements ConfigInterface
 
     public function getString(string $key): string
     {
-        return (string) $this->parameterBag->get($key);
+        $value = $this->parameterBag->get($key);
+        if (!\is_scalar($value) && null !== $value) {
+            throw new \RuntimeException(\sprintf('Parameter "%s" must be a scalar value.', $key));
+        }
+
+        return (string) $value;
     }
 
     public function getInt(string $key): int
     {
-        return (int) $this->parameterBag->get($key);
+        $value = $this->parameterBag->get($key);
+        if (!\is_scalar($value) && null !== $value) {
+            throw new \RuntimeException(\sprintf('Parameter "%s" must be a scalar value.', $key));
+        }
+
+        return (int) $value;
     }
 
     public function getBool(string $key): bool

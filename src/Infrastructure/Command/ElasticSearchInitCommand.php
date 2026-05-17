@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\Command;
 
 use Elastic\Elasticsearch\Client;
+use Elastic\Elasticsearch\Response\Elasticsearch;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -44,7 +45,11 @@ final class ElasticSearchInitCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         try {
-            $exists = 200 === $this->client->indices()->exists(['index' => $this->esIndexName])->getStatusCode();
+            $response = $this->client->indices()->exists(['index' => $this->esIndexName]);
+            if (!$response instanceof Elasticsearch) {
+                throw new \RuntimeException('Unexpected response type from ElasticSearch');
+            }
+            $exists = 200 === $response->getStatusCode();
 
             if ($exists) {
                 if (!(bool) $input->getOption('force')) {

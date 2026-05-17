@@ -9,6 +9,7 @@ use App\Domain\Exception\ProductNotFoundException;
 use App\Domain\Exception\SourceUnavailableException;
 use Elastic\Elasticsearch\Client;
 use Elastic\Elasticsearch\Exception\ClientResponseException;
+use Elastic\Elasticsearch\Response\Elasticsearch;
 
 /**
  * ElasticSearch driver implementation using the official PHP client.
@@ -42,6 +43,10 @@ final readonly class SimpleElasticSearchDriver implements IElasticSearchDriver
                 'index' => $this->esIndexName,
                 'id' => $id,
             ]);
+
+            if (!$response instanceof Elasticsearch) {
+                throw new SourceUnavailableException('Unexpected response type from ElasticSearch');
+            }
         } catch (ClientResponseException $e) {
             if (404 === $e->getResponse()->getStatusCode()) {
                 throw new ProductNotFoundException('Product not found: '.$id, 0, $e);
@@ -63,10 +68,15 @@ final readonly class SimpleElasticSearchDriver implements IElasticSearchDriver
     public function search(array $params): array
     {
         try {
-            /** @var array<string, mixed> $response */
-            $response = $this->client->search($params)->asArray();
+            $response = $this->client->search($params);
+            if (!$response instanceof Elasticsearch) {
+                throw new SourceUnavailableException('Unexpected response type from ElasticSearch');
+            }
 
-            return $response;
+            /** @var array<string, mixed> $data */
+            $data = $response->asArray();
+
+            return $data;
         } catch (\Exception $e) {
             throw new SourceUnavailableException('ElasticSearch error: '.$e->getMessage(), 0, $e);
         }

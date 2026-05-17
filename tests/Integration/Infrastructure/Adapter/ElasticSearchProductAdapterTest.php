@@ -11,6 +11,7 @@ use App\Infrastructure\Adapter\ElasticSearchProductAdapter;
 use App\Infrastructure\Driver\SimpleElasticSearchDriver;
 use Elastic\Elasticsearch\Client;
 use Elastic\Elasticsearch\Exception\ClientResponseException;
+use Elastic\Elasticsearch\Response\Elasticsearch;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
@@ -31,11 +32,24 @@ final class ElasticSearchProductAdapterTest extends KernelTestCase
     {
         $container = static::getContainer();
 
-        $this->esClient = $container->get(Client::class);
-        $this->esIndexName = $container->get(ConfigInterface::class)->getEsIndexName();
+        $client = $container->get(Client::class);
+        if (!$client instanceof Client) {
+            throw new \RuntimeException('ElasticSearch client not found in container');
+        }
+        $this->esClient = $client;
+
+        $config = $container->get(ConfigInterface::class);
+        if (!$config instanceof ConfigInterface) {
+            throw new \RuntimeException('Config service not found in container');
+        }
+        $this->esIndexName = $config->getEsIndexName();
 
         // Ensure index exists
         $response = $this->esClient->indices()->exists(['index' => $this->esIndexName]);
+        if (!$response instanceof Elasticsearch) {
+            throw new \RuntimeException('Unexpected response type from ElasticSearch');
+        }
+
         if (200 !== $response->getStatusCode()) {
             $this->esClient->indices()->create([
                 'index' => $this->esIndexName,

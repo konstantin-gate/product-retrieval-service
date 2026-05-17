@@ -23,21 +23,29 @@ final class ProductSeederTest extends TestCase
 
     public function testGenerateReturnsCorrectCount(): void
     {
-        $products = $this->seeder->generate(10);
+        /** @var int<1, max> $count */
+        $count = 10;
+        $products = $this->seeder->generate($count);
 
         self::assertCount(10, $products);
     }
 
     public function testGenerateSingleProduct(): void
     {
-        $products = $this->seeder->generate(1);
+        /** @var int<1, max> $count */
+        $count = 1;
+        $products = $this->seeder->generate($count);
 
         self::assertCount(1, $products);
     }
 
     #[DataProvider('provideProductCounts')]
+    /**
+     * @param int<1, max> $count
+     */
     public function testGeneratedProductsHaveValidUuids(int $count): void
     {
+        /** @var int<1, max> $count */
         $products = $this->seeder->generate($count);
 
         foreach ($products as $product) {
@@ -46,8 +54,12 @@ final class ProductSeederTest extends TestCase
     }
 
     #[DataProvider('provideProductCounts')]
+    /**
+     * @param int<1, max> $count
+     */
     public function testGeneratedProductsHaveNonEmptyNames(int $count): void
     {
+        /** @var int<1, max> $count */
         $products = $this->seeder->generate($count);
 
         foreach ($products as $product) {
@@ -56,8 +68,12 @@ final class ProductSeederTest extends TestCase
     }
 
     #[DataProvider('provideProductCounts')]
+    /**
+     * @param int<1, max> $count
+     */
     public function testGeneratedProductsHavePositivePrice(int $count): void
     {
+        /** @var int<1, max> $count */
         $products = $this->seeder->generate($count);
 
         foreach ($products as $product) {
@@ -66,8 +82,12 @@ final class ProductSeederTest extends TestCase
     }
 
     #[DataProvider('provideProductCounts')]
+    /**
+     * @param int<1, max> $count
+     */
     public function testGeneratedProductsHaveNonEmptyDescriptions(int $count): void
     {
+        /** @var int<1, max> $count */
         $products = $this->seeder->generate($count);
 
         foreach ($products as $product) {
@@ -77,14 +97,16 @@ final class ProductSeederTest extends TestCase
 
     public function testGeneratedProductsHaveUniqueIds(): void
     {
-        $products = $this->seeder->generate(50);
+        /** @var int<1, max> $count */
+        $count = 50;
+        $products = $this->seeder->generate($count);
         $ids = \array_map(static fn ($p): string => $p->id->value(), $products);
 
         self::assertSame(\array_unique($ids), $ids);
     }
 
     /**
-     * @return list<list<int>>
+     * @return list<list<int<1, max>>>
      */
     public static function provideProductCounts(): array
     {

@@ -31,7 +31,12 @@ final class DashboardEndpointTest extends WebTestCase
         ]);
 
         self::assertResponseIsSuccessful();
-        $data = json_decode($client->getResponse()->getContent(), true);
+        $content = $client->getResponse()->getContent();
+        if (false === $content) {
+            throw new \RuntimeException('Response content is false');
+        }
+        /** @var array<string, mixed> $data */
+        $data = json_decode($content, true);
         self::assertSame('ok', $data['status']);
         self::assertSame('ACTIVE_PRODUCT_SOURCE', $data['key']);
         self::assertSame('mysql', $data['value']);

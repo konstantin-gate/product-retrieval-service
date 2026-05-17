@@ -20,7 +20,11 @@ final class SimpleMySqlDriverTest extends KernelTestCase
 
     protected function setUp(): void
     {
-        $this->pdo = static::getContainer()->get(\PDO::class);
+        $pdo = static::getContainer()->get(\PDO::class);
+        if (!$pdo instanceof \PDO) {
+            throw new \RuntimeException('PDO service not found');
+        }
+        $this->pdo = $pdo;
 
         $stmt = $this->pdo->prepare(
             'REPLACE INTO products (id, name, price, description) VALUES (:id, :name, :price, :description)',

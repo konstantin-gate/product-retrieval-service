@@ -70,6 +70,7 @@ cli:
         description: 'Generovat testovací data produktů'
         option_count: 'Počet produktů'
         success: 'Úspěšně zaseto {count, plural, one {# produkt} few {# produkty} other {# produktů}}.'
+        error_invalid_count: 'Počet musí být alespoň 1.'
     migrate:
         description: 'Vytvořit MySQL tabulku produktů'
         success: 'Tabulka "products" zajištěna.'

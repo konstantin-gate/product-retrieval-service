@@ -27,8 +27,16 @@ final class MySqlProductAdapterTest extends KernelTestCase
     {
         $container = static::getContainer();
 
-        $this->pdo = $container->get(\PDO::class);
+        $pdo = $container->get(\PDO::class);
+        if (!$pdo instanceof \PDO) {
+            throw new \RuntimeException('PDO service not found');
+        }
+        $this->pdo = $pdo;
+
         $driver = $container->get(IMysqlDriver::class);
+        if (!$driver instanceof IMysqlDriver) {
+            throw new \RuntimeException('IMysqlDriver service not found');
+        }
         $this->adapter = new MySqlProductAdapter($driver);
 
         // Clean up any previous test data

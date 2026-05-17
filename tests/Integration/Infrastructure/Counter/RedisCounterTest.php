@@ -24,7 +24,11 @@ final class RedisCounterTest extends KernelTestCase
 
     protected function setUp(): void
     {
-        $this->redis = static::getContainer()->get(\Redis::class);
+        $redis = static::getContainer()->get(\Redis::class);
+        if (!$redis instanceof \Redis) {
+            throw new \RuntimeException('Redis service not found');
+        }
+        $this->redis = $redis;
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->counter = new RedisCounter($this->redis, $this->logger);
 

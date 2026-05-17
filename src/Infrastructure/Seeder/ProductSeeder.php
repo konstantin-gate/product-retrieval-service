@@ -29,9 +29,12 @@ final readonly class ProductSeeder
         $products = [];
 
         for ($i = 0; $i < $count; ++$i) {
+            /** @var string $name */
+            $name = $faker->words(3, true);
+
             $products[] = new ProductDTO(
                 ProductId::fromString(Uuid::v4()->toRfc4122()),
-                $faker->words(3, true),
+                $name,
                 Price::of((string) $faker->numberBetween(self::MIN_PRICE_MINOR, self::MAX_PRICE_MINOR)),
                 $faker->paragraph(),
             );

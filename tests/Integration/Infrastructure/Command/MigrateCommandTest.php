@@ -16,7 +16,11 @@ final class MigrateCommandTest extends KernelTestCase
     protected function setUp(): void
     {
         $kernel = self::bootKernel();
-        $this->pdo = static::getContainer()->get(\PDO::class);
+        $pdo = static::getContainer()->get(\PDO::class);
+        if (!$pdo instanceof \PDO) {
+            throw new \RuntimeException('PDO service not found');
+        }
+        $this->pdo = $pdo;
         $this->pdo->exec('DROP TABLE IF EXISTS products');
 
         $application = new Application($kernel);
@@ -32,6 +36,9 @@ final class MigrateCommandTest extends KernelTestCase
 
         // Check table exists
         $stmt = $this->pdo->query("SHOW TABLES LIKE 'products'");
+        if (!$stmt instanceof \PDOStatement) {
+            self::fail('Failed to query tables');
+        }
         self::assertNotFalse($stmt->fetch());
     }
 

@@ -70,6 +70,7 @@ cli:
         description: 'Generate fake product data'
         option_count: 'Number of products'
         success: 'Successfully seeded {count, plural, one {# product} other {# products}}.'
+        error_invalid_count: 'Count must be at least 1.'
     migrate:
         description: 'Create MySQL products table'
         success: 'Table "products" ensured.'
