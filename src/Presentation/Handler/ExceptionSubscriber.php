@@ -23,7 +23,7 @@ final readonly class ExceptionSubscriber
         $request = $event->getRequest();
 
         $isJson = 'json' === $request->getRequestFormat()
-            || \str_contains($request->headers->get('Accept', ''), 'application/json');
+            || \str_contains($request->headers->get('Accept') ?? '', 'application/json');
 
         if (!$isJson) {
             return;
