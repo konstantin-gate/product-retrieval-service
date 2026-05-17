@@ -52,7 +52,7 @@ final class ProductEndpointTest extends WebTestCase
             'refresh' => 'true',
         ]);
 
-        $client->request('GET', '/product/'.$id);
+        $client->request('GET', '/product/' . $id);
 
         self::assertResponseIsSuccessful();
         self::assertResponseHeaderSame('Content-Type', 'application/json');
@@ -72,7 +72,7 @@ final class ProductEndpointTest extends WebTestCase
     {
         $client = static::createClient();
         $id = '00000000-0000-0000-0000-000000000000';
-        $client->request('GET', '/product/'.$id, [], [], ['HTTP_ACCEPT' => 'application/json']);
+        $client->request('GET', '/product/' . $id, [], [], ['HTTP_ACCEPT' => 'application/json']);
 
         self::assertResponseStatusCodeSame(404);
         $content = $client->getResponse()->getContent();
@@ -126,8 +126,14 @@ final class ProductEndpointTest extends WebTestCase
         if (!$redis instanceof \Redis) {
             throw new \RuntimeException('Redis not found');
         }
-        $redis->del('counter:'.$id);
 
+        try {
+            $redis->ping();
+        } catch (\Throwable $e) {
+            self::markTestSkipped('Redis is unavailable, skipping counter increment test');
+        }
+
+        $redis->del('counter:' . $id);
         $stmt = $pdo->prepare('REPLACE INTO products (id, name, price, description) VALUES (:id, :name, :price, :description)');
         $stmt->execute([
             ':id' => $id,
@@ -149,7 +155,7 @@ final class ProductEndpointTest extends WebTestCase
         ]);
 
         // Counter starts at 0 after cleanup
-        $client->request('GET', '/product/'.$id.'/counter');
+        $client->request('GET', '/product/' . $id . '/counter');
         self::assertResponseIsSuccessful();
         $content1 = $client->getResponse()->getContent();
         if (false === $content1) {
@@ -160,14 +166,14 @@ final class ProductEndpointTest extends WebTestCase
         self::assertSame(0, $data1['count']);
 
         // Make product requests to increment counter (sync mode — immediate)
-        $client->request('GET', '/product/'.$id);
+        $client->request('GET', '/product/' . $id);
         self::assertResponseIsSuccessful();
 
-        $client->request('GET', '/product/'.$id);
+        $client->request('GET', '/product/' . $id);
         self::assertResponseIsSuccessful();
 
         // Counter endpoint should reflect exactly 2 increments
-        $client->request('GET', '/product/'.$id.'/counter');
+        $client->request('GET', '/product/' . $id . '/counter');
         self::assertResponseIsSuccessful();
         $content2 = $client->getResponse()->getContent();
         if (false === $content2) {
@@ -220,7 +226,7 @@ final class ProductEndpointTest extends WebTestCase
             'refresh' => 'true',
         ]);
 
-        $client->request('GET', '/product/'.$id);
+        $client->request('GET', '/product/' . $id);
 
         self::assertResponseIsSuccessful();
         $content = $client->getResponse()->getContent();

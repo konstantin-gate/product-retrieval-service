@@ -38,12 +38,10 @@ final class DashboardController extends AbstractController
         $healthStatus = $this->manager->getHealthStatus();
         $redisHealthy = $healthStatus['redis'];
 
-        $fallbackApplied = $this->manager->ensureConfigurationValidity($redisHealthy);
+        $this->manager->ensureConfigurationValidity($redisHealthy);
 
-        if ($fallbackApplied) {
+        if (!$redisHealthy) {
             $this->addFlash('warning', $this->translator->trans('flash.redis_fallback_notice'));
-
-            return $this->redirectToRoute('dashboard');
         }
 
         return $this->render('dashboard/index.html.twig', [

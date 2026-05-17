@@ -56,6 +56,7 @@ locale:
         en: 'English'
 
 flash:
+    dismiss: 'Zavřít oznámení'
     invalid_csrf: 'Neplatný CSRF token.'
     count_range_error: 'Počet musí být mezi 1 a 1000.'
     seed_success: 'Úspěšně vygenerováno {count, plural, one {# produkt} few {# produkty} other {# produktů}}.'

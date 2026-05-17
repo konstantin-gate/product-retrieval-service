@@ -27,12 +27,23 @@ final readonly class RedisConnectionFactory
         $port = $parsed['port'] ?? 6379;
 
         $redis = new \Redis();
-        $redis->connect($host, $port);
+        /** @disregard P1009 — ext-redis stub missing, RedisException exists at runtime */
+        $previousHandler = \set_error_handler(function (int $errno, string $errstr): bool {
+            throw new \RedisException($errstr);
+        });
+        try {
+            $redis->connect($host, $port);
 
-        $db = \array_key_exists('path', $parsed) ? (int) ltrim($parsed['path'], '/') : 0;
-        if ($db > 0) {
-            $redis->select($db);
+            $db = \array_key_exists('path', $parsed) ? (int) ltrim($parsed['path'], '/') : 0;
+            if ($db > 0) {
+                $redis->select($db);
+            }
+        } catch (\Throwable $e) {
+            \restore_error_handler();
+
+            return $redis;
         }
+        \restore_error_handler();
 
         return $redis;
     }

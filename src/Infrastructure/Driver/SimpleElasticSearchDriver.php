@@ -68,7 +68,6 @@ final readonly class SimpleElasticSearchDriver implements IElasticSearchDriver
     public function search(array $params): array
     {
         try {
-            /** @phpstan-ignore-next-line */
             $response = $this->client->search($params);
             if (!$response instanceof Elasticsearch) {
                 throw new SourceUnavailableException('Unexpected response type from ElasticSearch');

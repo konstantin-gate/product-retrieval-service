@@ -6,17 +6,7 @@
 {% block body %}
 <div x-data="{ searchId: '', dropdownOpen: false }" data-turbo-permanent class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-    {% for label, messages in app.flashes %}
-        {% for message in messages %}
-            <div data-testid="flash-message" class="mb-4 p-3 rounded-md text-sm {{
-                label == 'success' ? 'bg-green-50 text-green-700 border border-green-200' :
-                (label == 'warning' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
-                'bg-red-50 text-red-700 border border-red-200')
-            }}" role="alert">
-                {{ message }}
-            </div>
-        {% endfor %}
-    {% endfor %}
+    {% include 'components/flash_messages.html.twig' %}
 
     <div class="flex w-full items-center mb-8">
         <h1 data-testid="dashboard-title" class="text-3xl font-bold text-gray-900 flex-1">{{ 'dashboard.title'|trans }}</h1>
@@ -25,12 +15,12 @@
             {% if currentLocale == 'cs' %}
                 <span data-testid="locale-switch-cs" class="px-3 py-1 rounded-full text-xs font-medium bg-emerald-700 text-white">{{ 'locale.switcher.cs'|trans }}</span>
                 <a href="{{ path('locale_switch', {locale: 'en'}) }}" data-turbo="false" data-testid="locale-switch-en"
-                   class="px-3 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors">
+                   class="px-3 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors cursor-pointer">
                     {{ 'locale.switcher.en'|trans }}
                 </a>
             {% else %}
                 <a href="{{ path('locale_switch', {locale: 'cs'}) }}" data-turbo="false" data-testid="locale-switch-cs"
-                   class="px-3 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors">
+                   class="px-3 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors cursor-pointer">
                     {{ 'locale.switcher.cs'|trans }}
                 </a>
                 <span data-testid="locale-switch-en" class="px-3 py-1 rounded-full text-xs font-medium bg-emerald-700 text-white">{{ 'locale.switcher.en'|trans }}</span>
@@ -68,7 +58,7 @@
                     <input type="hidden" name="count" value="1000">
                     <button data-testid="generate-data-btn" type="submit"
                             :disabled="seeding"
-                            class="bg-emerald-700 text-white px-4 py-2 rounded-lg hover:bg-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm">
+                            class="bg-emerald-700 text-white px-4 py-2 rounded-lg hover:bg-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm cursor-pointer">
                         <span x-show="!seeding">{{ 'dashboard.generate_data'|trans }}</span>
                         <span x-show="seeding" class="flex items-center gap-2">
                             <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -99,7 +89,7 @@
                                         <input type="hidden" name="key" value="{{ key }}">
                                         <input type="hidden" name="value" value="{{ option }}">
                                         <button data-testid="toggle-{{ key|lower }}-{{ option|lower }}" type="submit"
-                                            class="px-3 py-1 rounded-full text-xs font-medium transition-colors
+                                            class="px-3 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer
                                                    {{ isActive ? 'bg-emerald-700 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}">
                                             {{ ('toggle.value.' ~ option|lower)|trans }}
                                         </button>
@@ -145,7 +135,7 @@
 
             <button data-testid="search-button" @click="document.getElementById('search-result').src = '/product/' + searchId"
                     :disabled="!searchId"
-                    class="bg-emerald-700 text-white px-6 py-2 rounded-lg hover:bg-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm">
+                    class="bg-emerald-700 text-white px-6 py-2 rounded-lg hover:bg-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm cursor-pointer">
                 {{ 'dashboard.search_button'|trans }}
             </button>
         </div>

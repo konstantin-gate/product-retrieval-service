@@ -56,6 +56,7 @@ locale:
         en: 'English'
 
 flash:
+    dismiss: 'Dismiss notification'
     invalid_csrf: 'Invalid CSRF token.'
     count_range_error: 'Count must be between 1 and 1000.'
     seed_success: 'Successfully generated {count, plural, one {# product} other {# products}}.'
