@@ -84,7 +84,7 @@
                                 {% set isActive = currentConfig[configKey] == option %}
                                 {% set isAvailable = option in availableToggles[key] %}
                                 {% if isAvailable %}
-                                    <form method="post" action="{{ path('dashboard_toggle') }}" class="inline">
+                                    <form method="post" action="{{ path('dashboard_toggle') }}" class="inline" data-turbo="false">
                                         <input type="hidden" name="_token" value="{{ csrf_token('toggle') }}">
                                         <input type="hidden" name="key" value="{{ key }}">
                                         <input type="hidden" name="value" value="{{ option }}">
