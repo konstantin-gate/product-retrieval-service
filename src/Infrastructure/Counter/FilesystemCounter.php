@@ -8,6 +8,7 @@ use App\Domain\Contract\CounterInterface;
 use App\Domain\Contract\SyncCounterInterface;
 use App\Domain\Exception\CounterException;
 use App\Domain\ValueObject\ProductId;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 
 /**
@@ -20,10 +21,13 @@ final readonly class FilesystemCounter implements CounterInterface, SyncCounterI
     private const COUNTER_KEY_PREFIX = 'counter_';
 
     /**
-     * @param FilesystemAdapter $cache Symfony filesystem cache adapter with "counter" namespace
+     * @param FilesystemAdapter $cache  Symfony filesystem cache adapter with "counter" namespace
+     * @param LoggerInterface   $logger Logger for counter operation errors
      */
-    public function __construct(private FilesystemAdapter $cache)
-    {
+    public function __construct(
+        private FilesystemAdapter $cache,
+        private LoggerInterface $logger,
+    ) {
     }
 
     /**
@@ -40,6 +44,11 @@ final readonly class FilesystemCounter implements CounterInterface, SyncCounterI
             $item->expiresAfter(null);
             $this->cache->save($item);
         } catch (\Exception $e) {
+            $this->logger->error('Counter increment failed', [
+                'productId' => $id->value(),
+                'driver' => 'filesystem',
+                'exception' => $e->getMessage(),
+            ]);
             throw new CounterException('Error incrementing counter: '.$e->getMessage(), 0, $e);
         }
     }
@@ -58,6 +67,11 @@ final readonly class FilesystemCounter implements CounterInterface, SyncCounterI
 
             return $item->isHit() ? (int) $item->get() : 0;
         } catch (\Exception $e) {
+            $this->logger->error('Counter read failed', [
+                'productId' => $id->value(),
+                'driver' => 'filesystem',
+                'exception' => $e->getMessage(),
+            ]);
             throw new CounterException('Error reading counter: '.$e->getMessage(), 0, $e);
         }
     }

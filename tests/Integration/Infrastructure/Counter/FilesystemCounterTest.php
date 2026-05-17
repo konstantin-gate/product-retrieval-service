@@ -6,7 +6,9 @@ namespace App\Tests\Integration\Infrastructure\Counter;
 
 use App\Domain\ValueObject\ProductId;
 use App\Infrastructure\Counter\FilesystemCounter;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -17,6 +19,7 @@ final class FilesystemCounterTest extends TestCase
 {
     private FilesystemCounter $counter;
     private string $tempDir;
+    private MockObject&LoggerInterface $logger;
 
     protected function setUp(): void
     {
@@ -24,7 +27,8 @@ final class FilesystemCounterTest extends TestCase
         \mkdir($this->tempDir);
 
         $adapter = new FilesystemAdapter('counter', 0, $this->tempDir);
-        $this->counter = new FilesystemCounter($adapter);
+        $this->logger = $this->createMock(LoggerInterface::class);
+        $this->counter = new FilesystemCounter($adapter, $this->logger);
     }
 
     protected function tearDown(): void

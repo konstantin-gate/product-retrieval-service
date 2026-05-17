@@ -10,6 +10,7 @@ use App\Domain\ValueObject\ProductId;
 use App\Infrastructure\Cache\FileCacheAdapter;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
@@ -27,6 +28,7 @@ final class FileCacheAdapterTest extends TestCase
     private FileCacheAdapter $cache;
     private string $tempDir;
     private FileCacheSerializerMockInterface&MockObject $serializer;
+    private LoggerInterface&MockObject $logger;
 
     protected function setUp(): void
     {
@@ -37,8 +39,9 @@ final class FileCacheAdapterTest extends TestCase
 
         // Mock serializer to handle Price/ProductId normalization correctly
         $this->serializer = $this->createMock(FileCacheSerializerMockInterface::class);
+        $this->logger = $this->createMock(LoggerInterface::class);
 
-        $this->cache = new FileCacheAdapter($fsAdapter, $this->serializer);
+        $this->cache = new FileCacheAdapter($fsAdapter, $this->serializer, $this->logger);
     }
 
     protected function tearDown(): void

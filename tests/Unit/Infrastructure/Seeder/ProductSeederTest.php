@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Infrastructure\Seeder;
 
 use App\Infrastructure\Seeder\ProductSeeder;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\Uuid;
 
@@ -34,7 +35,7 @@ final class ProductSeederTest extends TestCase
         self::assertCount(1, $products);
     }
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('provideProductCounts')]
+    #[DataProvider('provideProductCounts')]
     public function testGeneratedProductsHaveValidUuids(int $count): void
     {
         $products = $this->seeder->generate($count);
@@ -44,7 +45,7 @@ final class ProductSeederTest extends TestCase
         }
     }
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('provideProductCounts')]
+    #[DataProvider('provideProductCounts')]
     public function testGeneratedProductsHaveNonEmptyNames(int $count): void
     {
         $products = $this->seeder->generate($count);
@@ -54,7 +55,7 @@ final class ProductSeederTest extends TestCase
         }
     }
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('provideProductCounts')]
+    #[DataProvider('provideProductCounts')]
     public function testGeneratedProductsHavePositivePrice(int $count): void
     {
         $products = $this->seeder->generate($count);
@@ -64,7 +65,7 @@ final class ProductSeederTest extends TestCase
         }
     }
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('provideProductCounts')]
+    #[DataProvider('provideProductCounts')]
     public function testGeneratedProductsHaveNonEmptyDescriptions(int $count): void
     {
         $products = $this->seeder->generate($count);

@@ -7,6 +7,8 @@ namespace App\Tests\Integration\Infrastructure\Driver;
 use App\Domain\Contract\ConfigInterface;
 use App\Domain\Exception\ProductNotFoundException;
 use App\Infrastructure\Driver\SimpleElasticSearchDriver;
+use Elastic\Elasticsearch\Client;
+use Elastic\Elasticsearch\Exception\ClientResponseException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
@@ -14,7 +16,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
  */
 final class SimpleElasticSearchDriverTest extends KernelTestCase
 {
-    private \Elastic\Elasticsearch\Client $esClient;
+    private Client $esClient;
     private SimpleElasticSearchDriver $driver;
     private string $esIndexName;
 
@@ -24,7 +26,7 @@ final class SimpleElasticSearchDriverTest extends KernelTestCase
     {
         $container = static::getContainer();
 
-        $this->esClient = $container->get(\Elastic\Elasticsearch\Client::class);
+        $this->esClient = $container->get(Client::class);
         $this->esIndexName = $container->get(ConfigInterface::class)->getEsIndexName();
 
         $this->esClient->index([
@@ -49,7 +51,7 @@ final class SimpleElasticSearchDriverTest extends KernelTestCase
                 'index' => $this->esIndexName,
                 'id' => self::TEST_ID,
             ]);
-        } catch (\Elastic\Elasticsearch\Exception\ClientResponseException) {
+        } catch (ClientResponseException) {
             // Expected if document already deleted
         }
     }

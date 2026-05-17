@@ -8,6 +8,7 @@ use App\Domain\Contract\CounterInterface;
 use App\Domain\Contract\SyncCounterInterface;
 use App\Domain\Exception\CounterException;
 use App\Domain\ValueObject\ProductId;
+use Psr\Log\LoggerInterface;
 
 /**
  * Redis-based counter adapter using the Redis INCR command.
@@ -17,10 +18,13 @@ final readonly class RedisCounter implements CounterInterface, SyncCounterInterf
     private const COUNTER_KEY_PREFIX = 'counter:';
 
     /**
-     * @param \Redis $redis Pre-configured Redis connection
+     * @param \Redis          $redis  Pre-configured Redis connection
+     * @param LoggerInterface $logger Logger for counter operation errors
      */
-    public function __construct(private \Redis $redis)
-    {
+    public function __construct(
+        private \Redis $redis,
+        private LoggerInterface $logger,
+    ) {
     }
 
     /**
@@ -33,6 +37,11 @@ final readonly class RedisCounter implements CounterInterface, SyncCounterInterf
         try {
             $this->redis->incr(self::COUNTER_KEY_PREFIX.$id->value());
         } catch (\Exception $e) {
+            $this->logger->error('Counter increment failed', [
+                'productId' => $id->value(),
+                'driver' => 'redis',
+                'exception' => $e->getMessage(),
+            ]);
             throw new CounterException('Error incrementing in Redis: '.$e->getMessage(), 0, $e);
         }
     }
@@ -51,6 +60,11 @@ final readonly class RedisCounter implements CounterInterface, SyncCounterInterf
 
             return false !== $value ? (int) $value : 0;
         } catch (\Exception $e) {
+            $this->logger->error('Counter read failed', [
+                'productId' => $id->value(),
+                'driver' => 'redis',
+                'exception' => $e->getMessage(),
+            ]);
             throw new CounterException('Error reading from Redis: '.$e->getMessage(), 0, $e);
         }
     }

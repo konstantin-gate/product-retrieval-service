@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Infrastructure\Command;
 
 use App\Domain\Contract\ConfigInterface;
+use Elastic\Elasticsearch\Client;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
 
 final class ElasticSearchInitCommandTest extends KernelTestCase
 {
-    private \Elastic\Elasticsearch\Client $client;
+    private Client $client;
     private string $esIndexName;
     private CommandTester $commandTester;
 
@@ -20,7 +21,7 @@ final class ElasticSearchInitCommandTest extends KernelTestCase
         $kernel = self::bootKernel();
         $container = static::getContainer();
 
-        $this->client = $container->get(\Elastic\Elasticsearch\Client::class);
+        $this->client = $container->get(Client::class);
         $this->esIndexName = $container->get(ConfigInterface::class)->getEsIndexName();
 
         // Clean up

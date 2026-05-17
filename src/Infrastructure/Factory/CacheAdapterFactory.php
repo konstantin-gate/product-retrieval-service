@@ -8,6 +8,7 @@ use App\Domain\Contract\CacheInterface;
 use App\Infrastructure\Cache\FileCacheAdapter;
 use App\Infrastructure\Cache\NullCacheAdapter;
 use App\Infrastructure\Cache\RedisCacheAdapter;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Cache\Adapter\RedisAdapter;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
@@ -28,6 +29,7 @@ final readonly class CacheAdapterFactory
         private NormalizerInterface&DenormalizerInterface $serializer,
         private \Redis $redis,
         private string $cacheDir,
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -52,13 +54,13 @@ final readonly class CacheAdapterFactory
     {
         $cache = new FilesystemAdapter('cache', 0, $this->cacheDir);
 
-        return new FileCacheAdapter($cache, $this->serializer);
+        return new FileCacheAdapter($cache, $this->serializer, $this->logger);
     }
 
     private function createRedisCache(): RedisCacheAdapter
     {
         $cache = new RedisAdapter($this->redis, 'cache', 0);
 
-        return new RedisCacheAdapter($cache, $this->serializer);
+        return new RedisCacheAdapter($cache, $this->serializer, $this->logger);
     }
 }

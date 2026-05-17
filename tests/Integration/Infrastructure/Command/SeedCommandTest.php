@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Infrastructure\Command;
 
 use App\Domain\Contract\ConfigInterface;
+use Elastic\Elasticsearch\Client;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -12,7 +13,7 @@ use Symfony\Component\Console\Tester\CommandTester;
 final class SeedCommandTest extends KernelTestCase
 {
     private \PDO $pdo;
-    private \Elastic\Elasticsearch\Client $client;
+    private Client $client;
     private string $esIndexName;
     private CommandTester $commandTester;
 
@@ -22,7 +23,7 @@ final class SeedCommandTest extends KernelTestCase
         $container = static::getContainer();
 
         $this->pdo = $container->get(\PDO::class);
-        $this->client = $container->get(\Elastic\Elasticsearch\Client::class);
+        $this->client = $container->get(Client::class);
         $this->esIndexName = $container->get(ConfigInterface::class)->getEsIndexName();
 
         $this->pdo->exec('DELETE FROM products');

@@ -7,6 +7,7 @@ namespace App\Infrastructure\Cache;
 use App\Domain\Contract\CacheInterface;
 use App\Domain\DTO\ProductDTO;
 use App\Domain\Exception\CacheException;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
@@ -19,10 +20,12 @@ final readonly class FileCacheAdapter implements CacheInterface
     /**
      * @param FilesystemAdapter                         $cache      Symfony filesystem cache adapter
      * @param NormalizerInterface&DenormalizerInterface $serializer Serializer for DTO normalization
+     * @param LoggerInterface                           $logger     Logger for cache operation errors
      */
     public function __construct(
         private FilesystemAdapter $cache,
         private NormalizerInterface&DenormalizerInterface $serializer,
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -43,6 +46,11 @@ final readonly class FileCacheAdapter implements CacheInterface
 
             return $this->serializer->denormalize($item->get(), ProductDTO::class);
         } catch (\Exception $e) {
+            $this->logger->error('Cache read failed', [
+                'key' => $key,
+                'driver' => 'file',
+                'exception' => $e->getMessage(),
+            ]);
             throw new CacheException('Cache read error: '.$e->getMessage(), 0, $e);
         }
     }
@@ -64,6 +72,11 @@ final readonly class FileCacheAdapter implements CacheInterface
             $item->expiresAfter($ttl);
             $this->cache->save($item);
         } catch (\Exception $e) {
+            $this->logger->error('Cache write failed', [
+                'key' => $key,
+                'driver' => 'file',
+                'exception' => $e->getMessage(),
+            ]);
             throw new CacheException('Cache write error: '.$e->getMessage(), 0, $e);
         }
     }

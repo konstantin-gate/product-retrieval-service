@@ -38,7 +38,7 @@ final class AsyncCounterDecoratorIntegrationTest extends TestCase
         $productId = ProductId::fromString('550e8400-e29b-41d4-a716-446655440200');
 
         $fsAdapter = new FilesystemAdapter('counter', 0, $this->tempDir);
-        $fallbackCounter = new FilesystemCounter($fsAdapter);
+        $fallbackCounter = new FilesystemCounter($fsAdapter, new NullLogger());
 
         $syncBus = new class($fallbackCounter) implements MessageBusInterface {
             public function __construct(private FilesystemCounter $counter)
@@ -68,7 +68,7 @@ final class AsyncCounterDecoratorIntegrationTest extends TestCase
         $productId = ProductId::fromString('550e8400-e29b-41d4-a716-446655440201');
 
         $fsAdapter = new FilesystemAdapter('counter', 0, $this->tempDir);
-        $fallbackCounter = new FilesystemCounter($fsAdapter);
+        $fallbackCounter = new FilesystemCounter($fsAdapter, new NullLogger());
 
         $failingBus = new class implements MessageBusInterface {
             public function dispatch(object $message, array $stamps = []): Envelope

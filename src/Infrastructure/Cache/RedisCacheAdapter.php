@@ -7,6 +7,7 @@ namespace App\Infrastructure\Cache;
 use App\Domain\Contract\CacheInterface;
 use App\Domain\DTO\ProductDTO;
 use App\Domain\Exception\CacheException;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Cache\Adapter\RedisAdapter;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
@@ -19,10 +20,12 @@ final readonly class RedisCacheAdapter implements CacheInterface
     /**
      * @param RedisAdapter                              $cache      Symfony Redis cache adapter
      * @param NormalizerInterface&DenormalizerInterface $serializer Serializer for DTO normalization
+     * @param LoggerInterface                           $logger     Logger for cache operation errors
      */
     public function __construct(
         private RedisAdapter $cache,
         private NormalizerInterface&DenormalizerInterface $serializer,
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -43,6 +46,11 @@ final readonly class RedisCacheAdapter implements CacheInterface
 
             return $this->serializer->denormalize($item->get(), ProductDTO::class);
         } catch (\Exception $e) {
+            $this->logger->error('Cache read failed', [
+                'key' => $key,
+                'driver' => 'redis',
+                'exception' => $e->getMessage(),
+            ]);
             throw new CacheException('Cache read error: '.$e->getMessage(), 0, $e);
         }
     }
@@ -64,6 +72,11 @@ final readonly class RedisCacheAdapter implements CacheInterface
             $item->expiresAfter($ttl);
             $this->cache->save($item);
         } catch (\Exception $e) {
+            $this->logger->error('Cache write failed', [
+                'key' => $key,
+                'driver' => 'redis',
+                'exception' => $e->getMessage(),
+            ]);
             throw new CacheException('Cache write error: '.$e->getMessage(), 0, $e);
         }
     }

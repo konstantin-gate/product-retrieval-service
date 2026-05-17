@@ -6,6 +6,7 @@ namespace App\Tests\Concurrent\Infrastructure\Counter;
 
 use App\Domain\ValueObject\ProductId;
 use App\Infrastructure\Counter\RedisCounter;
+use Psr\Log\NullLogger;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
@@ -58,7 +59,7 @@ final class RedisCounterConcurrentTest extends KernelTestCase
                 if ($db > 0) {
                     $redis->select($db);
                 }
-                $counter = new RedisCounter($redis);
+                $counter = new RedisCounter($redis, new NullLogger());
                 for ($j = 0; $j < $incrementsPerProcess; ++$j) {
                     $counter->increment($id);
                 }
@@ -71,7 +72,7 @@ final class RedisCounterConcurrentTest extends KernelTestCase
             \pcntl_waitpid($pid, $status);
         }
 
-        $counter = new RedisCounter($this->redis);
+        $counter = new RedisCounter($this->redis, new NullLogger());
         self::assertSame($expectedTotal, $counter->getCount($id));
     }
 }

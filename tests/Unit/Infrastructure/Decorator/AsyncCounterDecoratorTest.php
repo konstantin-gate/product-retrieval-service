@@ -11,6 +11,7 @@ use App\Infrastructure\Message\CounterIncrementMessage;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Exception\ExceptionInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 
@@ -45,7 +46,7 @@ final class AsyncCounterDecoratorTest extends TestCase
             ->with(self::callback(function (CounterIncrementMessage $message) use ($productId): bool {
                 return $message->productId() === $productId->value();
             }))
-            ->willReturn(new \Symfony\Component\Messenger\Envelope(new \stdClass()));
+            ->willReturn(new Envelope(new \stdClass()));
         $this->fallbackCounter->expects($this->never())->method('increment');
 
         $this->decorator->increment($productId);

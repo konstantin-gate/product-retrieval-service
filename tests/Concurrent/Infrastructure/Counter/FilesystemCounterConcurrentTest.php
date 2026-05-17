@@ -7,6 +7,7 @@ namespace App\Tests\Concurrent\Infrastructure\Counter;
 use App\Domain\ValueObject\ProductId;
 use App\Infrastructure\Counter\FilesystemCounter;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -55,7 +56,7 @@ final class FilesystemCounterConcurrentTest extends TestCase
             }
             if (0 === $pid) {
                 $adapter = new FilesystemAdapter('counter', 0, $this->tempDir);
-                $counter = new FilesystemCounter($adapter);
+                $counter = new FilesystemCounter($adapter, new NullLogger());
                 for ($j = 0; $j < $incrementsPerProcess; ++$j) {
                     $counter->increment($id);
                 }
@@ -69,7 +70,7 @@ final class FilesystemCounterConcurrentTest extends TestCase
         }
 
         $adapter = new FilesystemAdapter('counter', 0, $this->tempDir);
-        $counter = new FilesystemCounter($adapter);
+        $counter = new FilesystemCounter($adapter, new NullLogger());
 
         $actualCount = $counter->getCount($id);
 

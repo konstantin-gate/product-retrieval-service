@@ -5,12 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\Functional\Presentation\Controller;
 
 use App\Domain\Contract\ConfigInterface;
-use App\Domain\Contract\SyncCounterInterface;
-use App\Domain\ValueObject\ProductId;
-use Symfony\Bundle\FrameworkBundle\Console\Application;
+use Elastic\Elasticsearch\Client;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Component\Console\Input\ArrayInput;
-use Symfony\Component\Console\Output\BufferedOutput;
 
 final class ProductEndpointTest extends WebTestCase
 {
@@ -21,7 +17,7 @@ final class ProductEndpointTest extends WebTestCase
         $esIndexName = $container->get(ConfigInterface::class)->getEsIndexName();
 
         $pdo = $container->get(\PDO::class);
-        $esClient = $container->get(\Elastic\Elasticsearch\Client::class);
+        $esClient = $container->get(Client::class);
 
         $id = '550e8400-e29b-41d4-a716-446655441111';
         $stmt = $pdo->prepare('REPLACE INTO products (id, name, price, description) VALUES (:id, :name, :price, :description)');
@@ -83,7 +79,7 @@ final class ProductEndpointTest extends WebTestCase
         $esIndexName = $container->get(ConfigInterface::class)->getEsIndexName();
 
         $pdo = $container->get(\PDO::class);
-        $esClient = $container->get(\Elastic\Elasticsearch\Client::class);
+        $esClient = $container->get(Client::class);
 
         $id = '550e8400-e29b-41d4-a716-446655442222';
 
@@ -110,43 +106,24 @@ final class ProductEndpointTest extends WebTestCase
             'refresh' => true,
         ]);
 
+        // Counter starts at 0 after cleanup
         $client->request('GET', '/product/'.$id.'/counter');
         self::assertResponseIsSuccessful();
         $data1 = json_decode($client->getResponse()->getContent(), true);
-        self::assertArrayHasKey('count', $data1);
-        $initialCount = $data1['count'];
+        self::assertSame(0, $data1['count']);
 
-        // Make product requests to increment counter
+        // Make product requests to increment counter (sync mode — immediate)
         $client->request('GET', '/product/'.$id);
         self::assertResponseIsSuccessful();
 
         $client->request('GET', '/product/'.$id);
         self::assertResponseIsSuccessful();
 
-        // Consume async messages to increment counter
-        $kernel = $container->get('kernel');
-        $application = new Application($kernel);
-        $application->setAutoExit(false);
-
-        $input = new ArrayInput([
-            'command' => 'messenger:consume',
-            'receivers' => ['async'],
-            '--limit' => 10,
-            '--time-limit' => 1,
-        ]);
-        $output = new BufferedOutput();
-        $application->run($input, $output);
-
-        // Check sync counter directly (async counter delegates to sync counter)
-        $syncCounter = $container->get(SyncCounterInterface::class);
-        $syncCount = $syncCounter->getCount(ProductId::fromString($id));
-        self::assertGreaterThanOrEqual(2, $syncCount);
-
-        // HTTP counter endpoint should also reflect the value
+        // Counter endpoint should reflect exactly 2 increments
         $client->request('GET', '/product/'.$id.'/counter');
         self::assertResponseIsSuccessful();
         $data2 = json_decode($client->getResponse()->getContent(), true);
-        self::assertGreaterThanOrEqual($initialCount + $syncCount, $data2['count']);
+        self::assertSame(2, $data2['count']);
     }
 
     public function testSerializationStructure(): void
@@ -156,7 +133,7 @@ final class ProductEndpointTest extends WebTestCase
         $esIndexName = $container->get(ConfigInterface::class)->getEsIndexName();
 
         $pdo = $container->get(\PDO::class);
-        $esClient = $container->get(\Elastic\Elasticsearch\Client::class);
+        $esClient = $container->get(Client::class);
 
         $id = '550e8400-e29b-41d4-a716-446655443333';
         $stmt = $pdo->prepare('REPLACE INTO products (id, name, price, description) VALUES (:id, :name, :price, :description)');

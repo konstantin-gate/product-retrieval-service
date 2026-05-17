@@ -80,11 +80,11 @@ final readonly class CounterAdapterFactory
     {
         $cache = new FilesystemAdapter('counter', 0, $this->counterDir);
 
-        return new FilesystemCounter($cache);
+        return new FilesystemCounter($cache, $this->logger);
     }
 
     private function createRedisCounter(): RedisCounter
     {
-        return new RedisCounter($this->redis);
+        return new RedisCounter($this->redis, $this->logger);
     }
 }

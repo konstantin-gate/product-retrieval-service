@@ -6,6 +6,8 @@ namespace App\Tests\Integration\Infrastructure\Counter;
 
 use App\Domain\ValueObject\ProductId;
 use App\Infrastructure\Counter\RedisCounter;
+use PHPUnit\Framework\MockObject\MockObject;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
@@ -15,6 +17,7 @@ final class RedisCounterTest extends KernelTestCase
 {
     private \Redis $redis;
     private RedisCounter $counter;
+    private MockObject&LoggerInterface $logger;
 
     private const TEST_ID_1 = '550e8400-e29b-41d4-a716-446655440041';
     private const TEST_ID_2 = '550e8400-e29b-41d4-a716-446655440042';
@@ -22,7 +25,8 @@ final class RedisCounterTest extends KernelTestCase
     protected function setUp(): void
     {
         $this->redis = static::getContainer()->get(\Redis::class);
-        $this->counter = new RedisCounter($this->redis);
+        $this->logger = $this->createMock(LoggerInterface::class);
+        $this->counter = new RedisCounter($this->redis, $this->logger);
 
         // Clean up test keys
         $this->redis->del('counter:'.self::TEST_ID_1);

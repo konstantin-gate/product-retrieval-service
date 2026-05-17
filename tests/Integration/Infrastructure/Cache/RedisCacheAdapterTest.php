@@ -10,6 +10,7 @@ use App\Domain\ValueObject\ProductId;
 use App\Infrastructure\Cache\RedisCacheAdapter;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Cache\Adapter\RedisAdapter;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
@@ -25,6 +26,7 @@ final class RedisCacheAdapterTest extends TestCase
 {
     private RedisCacheAdapter $cache;
     private RedisCacheSerializerMockInterface&MockObject $serializer;
+    private LoggerInterface&MockObject $logger;
 
     protected function setUp(): void
     {
@@ -39,7 +41,8 @@ final class RedisCacheAdapterTest extends TestCase
 
         $fsAdapter = new RedisAdapter($redis, namespace: 'test');
         $this->serializer = $this->createMock(RedisCacheSerializerMockInterface::class);
-        $this->cache = new RedisCacheAdapter($fsAdapter, $this->serializer);
+        $this->logger = $this->createMock(LoggerInterface::class);
+        $this->cache = new RedisCacheAdapter($fsAdapter, $this->serializer, $this->logger);
     }
 
     private function createDto(): ProductDTO

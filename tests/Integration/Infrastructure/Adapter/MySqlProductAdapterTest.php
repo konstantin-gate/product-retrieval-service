@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Infrastructure\Adapter;
 
+use App\Domain\Contract\IMysqlDriver;
 use App\Domain\Exception\ProductNotFoundException;
 use App\Domain\ValueObject\ProductId;
 use App\Infrastructure\Adapter\MySqlProductAdapter;
@@ -27,7 +28,7 @@ final class MySqlProductAdapterTest extends KernelTestCase
         $container = static::getContainer();
 
         $this->pdo = $container->get(\PDO::class);
-        $driver = $container->get(\App\Domain\Contract\IMysqlDriver::class);
+        $driver = $container->get(IMysqlDriver::class);
         $this->adapter = new MySqlProductAdapter($driver);
 
         // Clean up any previous test data

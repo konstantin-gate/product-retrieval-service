@@ -9,6 +9,7 @@ use App\Domain\ValueObject\Price;
 use App\Domain\ValueObject\ProductId;
 use App\Infrastructure\Cache\FileCacheAdapter;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
@@ -101,7 +102,7 @@ final class FileCacheAdapterConcurrentTest extends TestCase
             }
             if (0 === $pid) {
                 $fsAdapter = new FilesystemAdapter('test', 0, $this->tempDir);
-                $cache = new FileCacheAdapter($fsAdapter, $this->createSerializer());
+                $cache = new FileCacheAdapter($fsAdapter, $this->createSerializer(), new NullLogger());
                 $dto = new ProductDTO(
                     ProductId::fromString('550e8400-e29b-41d4-a716-446655440000'),
                     'Process '.$i,
@@ -119,7 +120,7 @@ final class FileCacheAdapterConcurrentTest extends TestCase
         }
 
         $fsAdapter = new FilesystemAdapter('test', 0, $this->tempDir);
-        $cache = new FileCacheAdapter($fsAdapter, $this->createSerializer());
+        $cache = new FileCacheAdapter($fsAdapter, $this->createSerializer(), new NullLogger());
 
         for ($i = 1; $i <= $processCount; ++$i) {
             self::assertNotNull($cache->get('key_'.$i), 'key_'.$i.' should exist');
@@ -138,7 +139,7 @@ final class FileCacheAdapterConcurrentTest extends TestCase
             }
             if (0 === $pid) {
                 $fsAdapter = new FilesystemAdapter('test', 0, $this->tempDir);
-                $cache = new FileCacheAdapter($fsAdapter, $this->createSerializer());
+                $cache = new FileCacheAdapter($fsAdapter, $this->createSerializer(), new NullLogger());
                 $dto = new ProductDTO(
                     ProductId::fromString('550e8400-e29b-41d4-a716-446655440000'),
                     'Process '.$i,
@@ -156,7 +157,7 @@ final class FileCacheAdapterConcurrentTest extends TestCase
         }
 
         $fsAdapter = new FilesystemAdapter('test', 0, $this->tempDir);
-        $cache = new FileCacheAdapter($fsAdapter, $this->createSerializer());
+        $cache = new FileCacheAdapter($fsAdapter, $this->createSerializer(), new NullLogger());
         $result = $cache->get('shared_key');
 
         self::assertNotNull($result);
