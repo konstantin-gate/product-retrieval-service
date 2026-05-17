@@ -66,10 +66,10 @@ final class FileCacheAdapterConcurrentTest extends TestCase
                 }
 
                 return new ProductDTO(
-                    ProductId::fromString((string) $data['id']),
-                    (string) $data['name'],
-                    Price::of((string) $data['price']),
-                    (string) $data['description'],
+                    ProductId::fromString(\is_scalar($data['id']) ? (string) $data['id'] : ''),
+                    \is_scalar($data['name']) ? (string) $data['name'] : '',
+                    Price::of(\is_scalar($data['price']) ? (string) $data['price'] : ''),
+                    \is_scalar($data['description']) ? (string) $data['description'] : '',
                 );
             }
 

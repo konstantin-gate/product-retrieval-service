@@ -56,7 +56,7 @@ final readonly class PriceNormalizer implements NormalizerInterface, Denormalize
      */
     public function denormalize(mixed $data, string $type, ?string $format = null, array $context = []): mixed
     {
-        return Price::of((string) $data);
+        return Price::of(\is_scalar($data) ? (string) $data : '');
     }
 
     /**

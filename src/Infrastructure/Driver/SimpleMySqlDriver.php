@@ -41,6 +41,7 @@ final readonly class SimpleMySqlDriver implements IMysqlDriver
                 throw new ProductNotFoundException('Product not found: '.$id);
             }
 
+            /** @var array<string, mixed> $row */
             return $row;
         } catch (\PDOException $e) {
             throw new SourceUnavailableException('Database error: '.$e->getMessage(), 0, $e);

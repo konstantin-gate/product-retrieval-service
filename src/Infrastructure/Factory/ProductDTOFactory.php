@@ -36,11 +36,20 @@ final readonly class ProductDTOFactory
             throw new \InvalidArgumentException('Missing key: description');
         }
 
+        $id = $data['id'];
+        $name = $data['name'];
+        $price = $data['price'];
+        $description = $data['description'];
+
+        if (!\is_scalar($id) || !\is_scalar($name) || !\is_scalar($price) || !\is_scalar($description)) {
+            throw new \InvalidArgumentException('Product data contains non-scalar values');
+        }
+
         return new ProductDTO(
-            ProductId::fromString((string) $data['id']),
-            (string) $data['name'],
-            Price::of((string) $data['price']),
-            (string) $data['description'],
+            ProductId::fromString((string) $id),
+            (string) $name,
+            Price::of((string) $price),
+            (string) $description,
         );
     }
 }

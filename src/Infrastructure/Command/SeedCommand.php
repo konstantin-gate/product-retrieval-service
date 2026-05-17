@@ -46,7 +46,8 @@ final class SeedCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $count = (int) $input->getOption('count');
+        $countOption = $input->getOption('count');
+        $count = \is_numeric($countOption) ? (int) $countOption : 0;
         if ($count < 1) {
             $output->writeln('<error>'.$this->trans('cli.seed.error_invalid_count').'</error>');
 

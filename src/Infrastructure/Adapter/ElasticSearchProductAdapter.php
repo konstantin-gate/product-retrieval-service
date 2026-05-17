@@ -50,7 +50,7 @@ final readonly class ElasticSearchProductAdapter implements ProductSourceInterfa
         $ids = [];
         /** @var array<string, mixed> $hit */
         foreach ($response['hits']['hits'] as $hit) {
-            if (\array_key_exists('_id', $hit) && null !== $hit['_id']) {
+            if (\array_key_exists('_id', $hit) && (is_string($hit['_id']) || is_int($hit['_id']))) {
                 $ids[] = (string) $hit['_id'];
             }
         }

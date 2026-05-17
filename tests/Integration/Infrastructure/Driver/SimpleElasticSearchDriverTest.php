@@ -110,8 +110,8 @@ final class SimpleElasticSearchDriverTest extends KernelTestCase
 
         self::assertNotEmpty($result);
         self::assertArrayHasKey('hits', $result);
-        $hits = $result['hits']['hits'] ?? [];
-        self::assertIsArray($hits);
+        $hitsData = $result['hits'];
+        $hits = (\is_array($hitsData) && isset($hitsData['hits']) && \is_array($hitsData['hits'])) ? $hitsData['hits'] : [];
         self::assertGreaterThanOrEqual(1, \count($hits));
     }
 }

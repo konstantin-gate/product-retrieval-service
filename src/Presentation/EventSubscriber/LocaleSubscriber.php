@@ -33,7 +33,7 @@ final readonly class LocaleSubscriber implements EventSubscriberInterface
         $session = $request->getSession();
         $locale = $session->get('_locale');
 
-        if (null !== $locale && '' !== $locale) {
+        if (\is_string($locale) && '' !== $locale) {
             $request->setLocale($locale);
         }
     }

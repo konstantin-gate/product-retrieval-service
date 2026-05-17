@@ -39,7 +39,8 @@ final readonly class FilesystemCounter implements CounterInterface, SyncCounterI
     {
         try {
             $item = $this->cache->getItem(self::COUNTER_KEY_PREFIX.$id->value());
-            $current = $item->isHit() ? (int) $item->get() : 0;
+            $val = $item->get();
+            $current = ($item->isHit() && \is_numeric($val)) ? (int) $val : 0;
             $item->set($current + 1);
             $item->expiresAfter(null);
             $this->cache->save($item);
@@ -64,8 +65,9 @@ final readonly class FilesystemCounter implements CounterInterface, SyncCounterI
     {
         try {
             $item = $this->cache->getItem(self::COUNTER_KEY_PREFIX.$id->value());
+            $val = $item->get();
 
-            return $item->isHit() ? (int) $item->get() : 0;
+            return ($item->isHit() && \is_numeric($val)) ? (int) $val : 0;
         } catch (\Exception $e) {
             $this->logger->error('Counter read failed', [
                 'productId' => $id->value(),

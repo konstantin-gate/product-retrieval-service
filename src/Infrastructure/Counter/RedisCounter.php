@@ -58,7 +58,7 @@ final readonly class RedisCounter implements CounterInterface, SyncCounterInterf
         try {
             $value = $this->redis->get(self::COUNTER_KEY_PREFIX.$id->value());
 
-            return false !== $value ? (int) $value : 0;
+            return \is_numeric($value) ? (int) $value : 0;
         } catch (\Exception $e) {
             $this->logger->error('Counter read failed', [
                 'productId' => $id->value(),

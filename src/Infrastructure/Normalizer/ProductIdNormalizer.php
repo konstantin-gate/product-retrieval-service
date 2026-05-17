@@ -52,7 +52,7 @@ final readonly class ProductIdNormalizer implements NormalizerInterface, Denorma
      */
     public function denormalize(mixed $data, string $type, ?string $format = null, array $context = []): mixed
     {
-        return ProductId::fromString((string) $data);
+        return ProductId::fromString(\is_scalar($data) ? (string) $data : '');
     }
 
     /**
